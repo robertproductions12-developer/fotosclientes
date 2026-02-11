@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neo-Tactile No-Storage System</title>
+    <title>Neo-Tactile Pro | Download & Sync</title>
     
-    <!-- Librerías -->
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -17,44 +16,57 @@
             --accent: #00f2ff;
             --blue: #3b82f6;
             --glass: rgba(255, 255, 255, 0.05);
-            --border: rgba(255, 255, 255, 0.1);
+            --border: rgba(255, 255, 255, 0.12);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: radial-gradient(circle at top right, #1e293b, #020617); color: white; min-height: 100vh; padding: 15px; display: flex; justify-content: center; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: radial-gradient(circle at top right, #1e293b, #020617); color: white; min-height: 100vh; padding: 10px; display: flex; justify-content: center; }
 
         .app-card {
-            width: 100%; max-width: 450px; background: var(--glass); backdrop-filter: blur(25px);
-            border: 1px solid var(--border); border-radius: 35px; padding: 20px;
-            display: flex; flex-direction: column; height: 94vh; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            width: 100%; max-width: 460px; background: var(--glass); backdrop-filter: blur(30px);
+            border: 1px solid var(--border); border-radius: 40px; padding: 25px;
+            display: flex; flex-direction: column; height: 95vh; box-shadow: 0 30px 60px rgba(0,0,0,0.6);
         }
 
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 20px; }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: none; color: white; border-radius: 15px; cursor: pointer; font-weight: bold; }
-        .tab-btn.active { background: var(--blue); box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4); }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 20px; }
+        .tab-btn { flex: 1; padding: 14px; border: none; background: none; color: white; border-radius: 15px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .tab-btn.active { background: var(--blue); box-shadow: 0 5px 20px rgba(59, 130, 246, 0.5); }
 
         .view { display: none; flex-direction: column; overflow-y: auto; flex: 1; scrollbar-width: none; }
         .view.active { display: flex; }
         .view::-webkit-scrollbar { display: none; }
 
-        .cam-box { width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 25px; overflow: hidden; border: 2px solid var(--border); margin-bottom: 15px; }
+        /* Emisor */
+        .cam-container { width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 30px; overflow: hidden; border: 2px solid var(--border); margin-bottom: 15px; }
         video { width: 100%; height: 100%; object-fit: cover; }
 
-        .btn { width: 100%; padding: 16px; border-radius: 20px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: 0.2s; }
-        .btn-cap { background: var(--accent); color: #000; }
-        .btn-send { background: var(--blue); color: #fff; }
+        .btn { width: 100%; padding: 16px; border-radius: 20px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 12px; font-size: 0.9rem; }
+        .btn-cap { background: var(--accent); color: #000; box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
+        .btn-send { background: var(--blue); color: #fff; margin-top: 10px; }
 
-        .gallery { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 15px; }
-        .thumb { aspect-ratio: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 10px; background-size: cover; background-position: center; }
+        .gallery { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+        .thumb { aspect-ratio: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; background-size: cover; background-position: center; }
 
-        input { width: 100%; padding: 16px; border-radius: 15px; border: 1px solid var(--border); background: rgba(0,0,0,0.3); color: white; margin-bottom: 12px; outline: none; }
+        input { width: 100%; padding: 18px; border-radius: 18px; border: 1px solid var(--border); background: rgba(0,0,0,0.4); color: white; margin-bottom: 12px; outline: none; }
 
-        /* Receptor */
-        .folder { background: rgba(255,255,255,0.03); border-radius: 25px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border); border-left: 4px solid var(--accent); }
-        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; margin-top: 10px; }
-        .folder-grid img { width: 100%; aspect-ratio: 1; border-radius: 10px; object-fit: cover; }
+        /* Receptor: Carpetas Profesionales */
+        .folder { background: rgba(255,255,255,0.03); border-radius: 30px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); border-top: 4px solid var(--accent); }
+        .folder-title { font-size: 1.2rem; font-weight: bold; color: var(--accent); margin-bottom: 10px; }
+        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 15px; }
+        
+        .img-wrapper { position: relative; border-radius: 12px; overflow: hidden; }
+        .folder-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+        
+        /* Botón descargar sobre la foto */
+        .download-icon {
+            position: absolute; bottom: 5px; right: 5px;
+            background: var(--blue); color: white; width: 25px; height: 25px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 10px; cursor: pointer; text-decoration: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
 
         .hidden { display: none; }
     </style>
@@ -63,8 +75,8 @@
 
     <div class="app-card">
         <div class="header">
-            <h2 style="font-weight:200; letter-spacing:2px;">SISTEMA <span style="color:var(--accent)">PRO</span></h2>
-            <button onclick="location.reload()" style="background:none; border:none; color:var(--accent); font-size:0.7rem;">REINICIAR</button>
+            <h1 style="font-weight:200; font-size:1.3rem; letter-spacing:3px;">NEO <span style="color:var(--accent)">SYNC</span></h1>
+            <button onclick="location.reload()" style="background:none; border:none; color:var(--accent); font-size:0.7rem; cursor:pointer;">SALIR</button>
         </div>
 
         <div class="tabs">
@@ -72,42 +84,41 @@
             <button id="t-receptor" class="tab-btn" onclick="switchTab('receptor')">RECEPTOR</button>
         </div>
 
-        <!-- EMISOR -->
+        <!-- VISTA EMISOR -->
         <div id="v-emisor" class="view active">
-            <div class="cam-box"><video id="video" autoplay playsinline></video></div>
+            <div class="cam-container"><video id="video" autoplay playsinline></video></div>
             <canvas id="canvas" class="hidden"></canvas>
             
-            <button class="btn btn-cap" onclick="capturePhoto()">📷 TOMAR FOTO (<span id="count">0</span>/5)</button>
-            <div class="gallery">
+            <button class="btn btn-cap" onclick="capturePhoto()">📷 CAPTURAR FOTO (<span id="count">0</span>/5)</button>
+            <div class="gallery" id="gal-emisor">
                 <div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div>
             </div>
 
-            <input type="text" id="nombre" placeholder="Nombre Responsable">
-            <input type="text" id="nota" placeholder="Número de Nota">
-            <button class="btn btn-send" id="btn-envio" onclick="enviarBase64()">ENVIAR CARPETA A RECEPTOR</button>
-            <p id="status" style="font-size: 0.7rem; text-align: center; color: var(--accent);"></p>
+            <input type="text" id="nombre" placeholder="Responsable de entrega">
+            <input type="text" id="nota" placeholder="N° Nota de Entrega">
+            <button class="btn btn-send" id="btn-envio" onclick="enviarAFirebase()">ENVIAR CARPETA COMPLETA</button>
+            <p id="status" style="text-align:center; font-size:0.7rem; color:var(--accent)"></p>
         </div>
 
-        <!-- RECEPTOR -->
+        <!-- VISTA RECEPTOR -->
         <div id="v-receptor" class="view">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px">
-                <button class="btn" style="background:#10b981; margin:0" onclick="exportExcel()">EXCEL</button>
-                <button class="btn" style="background:#f59e0b; margin:0" onclick="exportPDF()">PDF</button>
-                <button class="btn" style="background:#ef4444; grid-column: span 2" onclick="vaciarBase()">BORRAR TODO EL DÍA</button>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+                <button class="btn" style="background:#10b981; margin:0;" onclick="exportExcel()">EXCEL</button>
+                <button class="btn" style="background:#f59e0b; margin:0;" onclick="exportPDF()">PDF</button>
+                <button class="btn" style="background:#ef4444; grid-column: span 2;" onclick="vaciarTodo()">VACIAR REGISTROS (REINICIO)</button>
             </div>
-            <div id="lista-carpetas">
-                <p style="text-align:center; opacity:0.3; margin-top:20px">Esperando datos...</p>
+            <div id="listado-realtime">
+                <p style="text-align:center; opacity:0.3; margin-top:20px;">Escuchando cambios en la nube...</p>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIGURACIÓN (Firestore Solamente)
+        // CONFIGURACIÓN FIREBASE
         const firebaseConfig = {
              apiKey: "AIzaSyDia46IAJrJDEuLGA9ULKTlebcjiZ1dYig",
              authDomain: "fotosclientes-c172e.firebaseapp.com",
              projectId: "fotosclientes-c172e",
-             // No usamos storageBucket aquí
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -115,57 +126,54 @@
 
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        let fotosBase64 = [];
+        let misFotos = [];
 
-        // Cámara
+        // Inicializar Cámara
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then(s => video.srcObject = s).catch(e => alert("Error cámara: " + e));
+            .then(s => video.srcObject = s).catch(e => alert("Cámara bloqueada"));
 
-        // Capturar y Comprimir (CRÍTICO para que quepa en Firestore)
+        // Capturar y procesar (Calidad optimizada para descargar)
         function capturePhoto() {
-            if(fotosBase64.length >= 5) return alert("Máximo 5 fotos");
+            if(misFotos.length >= 5) return alert("Límite: 5 fotos");
             
-            // Reducimos tamaño de imagen para que no pese
-            canvas.width = 400; 
-            canvas.height = 300;
-            canvas.getContext('2d').drawImage(video, 0, 0, 400, 300);
+            // Resolución para descarga (600px es buen balance para Firestore y Calidad)
+            canvas.width = 640; 
+            canvas.height = 480;
+            canvas.getContext('2d').drawImage(video, 0, 0, 640, 480);
             
-            // Calidad 0.5 (Media) para ahorrar espacio
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
-            fotosBase64.push(dataUrl);
+            const base64 = canvas.toDataURL('image/jpeg', 0.7); // 0.7 es alta calidad
+            misFotos.push(base64);
             
-            document.getElementById('count').innerText = fotosBase64.length;
+            document.getElementById('count').innerText = misFotos.length;
             const thumbs = document.querySelectorAll('.thumb');
-            thumbs[fotosBase64.length-1].style.backgroundImage = `url(${dataUrl})`;
+            thumbs[misFotos.length-1].style.backgroundImage = `url(${base64})`;
         }
 
-        // Enviar como Texto a Firestore
-        async function enviarBase64() {
-            const n = document.getElementById('nombre').value;
-            const nt = document.getElementById('nota').value;
+        async function enviarAFirebase() {
+            const nom = document.getElementById('nombre').value;
+            const not = document.getElementById('nota').value;
             const btn = document.getElementById('btn-envio');
 
-            if(!n || !nt || fotosBase64.length === 0) return alert("Faltan datos o fotos");
+            if(!nom || !not || misFotos.length === 0) return alert("Llena los campos y toma fotos");
 
             btn.disabled = true;
-            btn.innerText = "SINCRONIZANDO...";
-            document.getElementById('status').innerText = "Comprimiendo carpeta para envío...";
+            btn.innerText = "SUBIENDO DATOS...";
+            document.getElementById('status').innerText = "Sincronizando fotos de alta resolución...";
 
             try {
-                // Guardamos directamente el array de textos (Base64) en Firestore
                 await db.collection("entregas").add({
-                    nombre: n,
-                    nota: nt,
-                    fotos: fotosBase64,
+                    responsable: nom,
+                    nota: not,
+                    imagenes: misFotos, // Array de Base64
                     fecha: new Date().toLocaleDateString(),
                     hora: new Date().toLocaleTimeString(),
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                alert("✅ GUARDADO EN RECEPTOR (SIN STORAGE)");
+                alert("✅ CARPETA GUARDADA EN RECEPTOR");
                 location.reload();
             } catch (err) {
-                alert("Error: " + err.message);
+                alert("Error de espacio: Toma menos fotos o reduce calidad");
                 btn.disabled = false;
             }
         }
@@ -175,59 +183,71 @@
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`v-${t}`).classList.add('active');
             document.getElementById(`t-${t}`).classList.add('active');
-            if(t === 'receptor') loadRealtime();
+            if(t === 'receptor') iniciarEscucha();
         }
 
-        let totalData = [];
-        function loadRealtime() {
+        let datosReceptor = [];
+        function iniciarEscucha() {
             db.collection("entregas").orderBy("timestamp", "desc").onSnapshot(snap => {
-                const list = document.getElementById('lista-carpetas');
-                list.innerHTML = "";
-                totalData = [];
+                const contenedor = document.getElementById('listado-realtime');
+                contenedor.innerHTML = "";
+                datosReceptor = [];
 
                 if(snap.empty) {
-                    list.innerHTML = '<p style="text-align:center; opacity:0.3">Carpeta de entrada vacía</p>';
+                    contenedor.innerHTML = '<p style="text-align:center; opacity:0.3">Sin registros hoy</p>';
                     return;
                 }
 
                 snap.forEach(doc => {
-                    const d = doc.data();
-                    totalData.push(d);
-                    const imgs = d.fotos.map(src => `<img src="${src}" onclick="window.open('${src}')">`).join('');
+                    const data = doc.data();
+                    datosReceptor.push(data);
                     
-                    list.innerHTML += `
+                    // Crear grid de fotos con botón de descarga para cada una
+                    const fotosHTML = data.imagenes.map((src, i) => `
+                        <div class="img-wrapper">
+                            <img src="${src}" onclick="verGrande('${src}')">
+                            <a href="${src}" download="Nota_${data.nota}_Foto_${i+1}.jpg" class="download-icon">⬇️</a>
+                        </div>
+                    `).join('');
+                    
+                    contenedor.innerHTML += `
                         <div class="folder">
-                            <div style="font-size:0.7rem; opacity:0.5;">${d.fecha} | ${d.hora}</div>
-                            <div style="color:var(--accent); font-weight:bold; font-size:1.1rem">NOTA #${d.nota}</div>
-                            <div style="font-size:0.8rem; margin-bottom:10px">Responsable: ${d.nombre}</div>
-                            <div class="folder-grid">${imgs}</div>
+                            <div style="font-size:0.7rem; opacity:0.5; margin-bottom:5px">${data.fecha} | ${data.hora}</div>
+                            <div class="folder-title">Carpeta #${data.nota}</div>
+                            <div style="font-size:0.85rem">Responsable: ${data.responsable}</div>
+                            <div class="folder-grid">${fotosHTML}</div>
                         </div>
                     `;
                 });
             });
         }
 
-        // Exportar
+        function verGrande(src) {
+            const w = window.open("");
+            w.document.write(`<img src="${src}" style="width:100%; height:auto">`);
+        }
+
+        // Exportaciones
         function exportPDF() {
-            html2pdf().from(document.getElementById('lista-carpetas')).set({
-                margin: 0.5, filename: 'Reporte_Realtime.pdf',
+            html2pdf().from(document.getElementById('listado-realtime')).set({
+                margin: 0.5, filename: 'Reporte_Completo.pdf',
                 html2canvas: { scale: 2 },
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
             }).save();
         }
 
         function exportExcel() {
-            const ws = XLSX.utils.json_to_sheet(totalData.map(d => ({ Nota: d.nota, Nombre: d.nombre, Fecha: d.fecha })));
+            const ws = XLSX.utils.json_to_sheet(datosReceptor.map(d => ({ Nota: d.nota, Responsable: d.responsable, Fecha: d.fecha })));
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Datos");
-            XLSX.writeFile(wb, "Reporte.xlsx");
+            XLSX.utils.book_append_sheet(wb, ws, "Historial");
+            XLSX.writeFile(wb, "Reporte_General.xlsx");
         }
 
-        async function vaciarBase() {
-            if(!confirm("¿Borrar todo?")) return;
+        async function vaciarTodo() {
+            if(!confirm("¿Borrar todos los archivos de hoy?")) return;
             const snap = await db.collection("entregas").get();
             const batch = db.batch();
-            snap.docs.forEach(doc => batch.delete(doc.ref));
+            snap.docs.forEach(d => batch.delete(d.ref));
             await batch.commit();
         }
     </script>
