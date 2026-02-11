@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neo-Tactile Delivery System</title>
+    
+    <!-- Librerías Externas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-storage-compat.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --accent-blue: #3b82f6;
+            --accent-cyan: #22d3ee;
+            --text-main: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+
+        body {
+            background: radial-gradient(circle at top left, #1e293b, #020617);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* Estilo Neo-Tactile (Glassmorphism) */
+        .container {
+            width: 90%;
+            max-width: 450px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            padding: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { font-weight: 300; letter-spacing: 2px; }
+
+        .role-selector {
+            display: flex;
+            background: rgba(0,0,0,0.2);
+            border-radius: 20px;
+            padding: 5px;
+            margin-bottom: 25px;
+        }
+
+        .role-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            border-radius: 15px;
+            transition: 0.3s;
+        }
+
+        .role-btn.active {
+            background: var(--accent-blue);
+            box-shadow: 0 0 15px var(--accent-blue);
+        }
+
+        /* Formulario */
+        .input-group { margin-bottom: 15px; }
+        input {
+            width: 100%;
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.05);
+            color: white;
+            outline: none;
+        }
+
+        .camera-box {
+            width: 100%;
+            height: 200px;
+            background: #000;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid var(--glass-border);
+        }
+
+        video, canvas { width: 100%; height: 100%; object-fit: cover; }
+
+        .btn-main {
+            width: 100%;
+            padding: 15px;
+            border-radius: 20px;
+            border: none;
+            background: var(--accent-blue);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+            transition: 0.3s;
+        }
+
+        .btn-main:active { transform: scale(0.98); }
+
+        /* Receptor Listado */
+        .list-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--accent-cyan);
+        }
+
+        .list-item img { width: 60px; height: 60px; border-radius: 10px; margin-top: 10px; }
+
+        .actions { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn-sec { padding: 8px 15px; border-radius: 10px; border: none; cursor: pointer; font-size: 12px; }
+
+        .hidden { display: none; }
+
+        .status-dot {
+            width: 10px; height: 10px; background: var(--accent-cyan);
+            border-radius: 50%; display: inline-block; margin-right: 5px;
+            box-shadow: 0 0 10px var(--accent-cyan);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>NEO-TACTILE</h1>
+            <p style="font-size: 0.8rem; opacity: 0.6;">SISTEMA DE ENTREGAS</p>
+        </div>
+
+        <div class="role-selector">
+            <button class="role-btn active" onclick="switchRole('emisor')">EMISOR</button>
+            <button class="role-btn" onclick="switchRole('receptor')">RECEPTOR</button>
+        </div>
+
+        <!-- VISTA EMISOR -->
+        <div id="view-emisor">
+            <div class="camera-box">
+                <video id="video" autoplay playsinline></video>
+                <canvas id="canvas" class="hidden"></canvas>
+            </div>
+            
+            <div class="input-group">
+                <input type="text" id="nombre" placeholder="Nombre del responsable">
+            </div>
+            <div class="input-group">
+                <input type="text" id="nota" placeholder="N° Nota de Entrega">
+            </div>
+
+            <button class="btn-main" onclick="captureAndSend()">ENVIAR AHORA</button>
+        </div>
+
+        <!-- VISTA RECEPTOR -->
+        <div id="view-receptor" class="hidden">
+            <div class="actions">
+                <button class="btn-sec" style="background: #e11d48; color: white;" onclick="clearToday()">BORRAR DÍA</button>
+                <button class="btn-sec" style="background: #10b981; color: white;" onclick="exportExcel()">EXCEL</button>
+                <button class="btn-sec" style="background: #f59e0b; color: white;" onclick="exportPDF()">PDF</button>
+            </div>
+            
+            <div id="data-list">
+                <!-- Se llena dinámicamente -->
+                <p style="text-align:center; opacity:0.5;">Esperando datos...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. CONFIGURACIÓN FIREBASE (REEMPLAZA CON TUS DATOS)
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "TU_PROYECTO.firebaseapp.com",
+            projectId: "TU_PROYECTO",
+            storageBucket: "TU_PROYECTO.appspot.com",
+            messagingSenderId: "ID",
+            appId: "APP_ID"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // 2. INICIALIZAR CÁMARA
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(stream => video.srcObject = stream);
+
+        // 3. CAMBIAR ROLES
+        function switchRole(role) {
+            document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if(role === 'emisor') {
+                document.getElementById('view-emisor').classList.remove('hidden');
+                document.getElementById('view-receptor').classList.add('hidden');
+            } else {
+                document.getElementById('view-emisor').classList.add('hidden');
+                document.getElementById('view-receptor').classList.remove('hidden');
+                loadData();
+            }
+        }
+
+        // 4. CAPTURAR Y ENVIAR (EMISOR)
+        async function captureAndSend() {
+            const nombre = document.getElementById('nombre').value;
+            const nota = document.getElementById('nota').value;
+
+            if(!nombre || !nota) return alert("Completa los campos");
+
+            // Capturar foto del video
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0);
+            
+            const imageData = canvas.toDataURL('image/jpeg');
+            const blob = await (await fetch(imageData)).blob();
+
+            // Subir a Storage
+            const fileName = `entregas/${Date.now()}.jpg`;
+            const storageRef = storage.ref(fileName);
+            
+            try {
+                const snapshot = await storageRef.put(blob);
+                const url = await snapshot.ref.getDownloadURL();
+
+                // Guardar en Firestore
+                await db.collection("entregas").add({
+                    nombre,
+                    nota,
+                    url,
+                    fecha: new Date().toLocaleDateString(),
+                    hora: new Date().toLocaleTimeString(),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert("✅ Enviado con éxito");
+                document.getElementById('nombre').value = "";
+                document.getElementById('nota').value = "";
+            } catch (e) {
+                console.error(e);
+                alert("Error al enviar");
+            }
+        }
+
+        // 5. CARGAR DATOS EN TIEMPO REAL (RECEPTOR)
+        let currentData = [];
+        function loadData() {
+            db.collection("entregas").orderBy("timestamp", "desc").onSnapshot(snapshot => {
+                const list = document.getElementById('data-list');
+                list.innerHTML = "";
+                currentData = [];
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    data.id = doc.id;
+                    currentData.push(data);
+
+                    list.innerHTML += `
+                        <div class="list-item">
+                            <div style="font-size: 0.8rem; opacity: 0.7;">${data.fecha} - ${data.hora}</div>
+                            <div style="font-weight: bold; margin: 5px 0;">${data.nombre}</div>
+                            <div>Nota: #${data.nota}</div>
+                            <img src="${data.url}" onclick="window.open('${data.url}')">
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        // 6. EXPORTAR Y LIMPIAR
+        function exportPDF() {
+            const element = document.getElementById('data-list');
+            const opt = { margin: 1, filename: 'entregas_dia.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
+            html2pdf().set(opt).from(element).save();
+        }
+
+        function exportExcel() {
+            const ws = XLSX.utils.json_to_sheet(currentData.map(d => ({ Nombre: d.nombre, Nota: d.nota, Fecha: d.fecha, Hora: d.hora, Imagen: d.url })));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Entregas");
+            XLSX.writeFile(wb, "Reporte_Entregas.xlsx");
+        }
+
+        async function clearToday() {
+            if(!confirm("¿Estás seguro de vaciar los datos de hoy?")) return;
+            const snapshot = await db.collection("entregas").get();
+            const batch = db.batch();
+            snapshot.docs.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+            alert("Carpeta puesta a cero.");
+        }
+    </script>
+</body>
+</html>
