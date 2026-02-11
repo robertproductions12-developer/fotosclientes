@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neo-Tactile Delivery System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neo-Tactile Delivery Pro</title>
     
     <!-- Librerías Externas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -14,148 +14,164 @@
 
     <style>
         :root {
-            --bg-color: #0f172a;
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
+            --bg-color: #0d1117;
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
             --accent-blue: #3b82f6;
-            --accent-cyan: #22d3ee;
+            --accent-cyan: #00f2ff;
             --text-main: #ffffff;
+            --danger: #ef4444;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
 
         body {
-            background: radial-gradient(circle at top left, #1e293b, #020617);
+            background: radial-gradient(circle at top right, #1e293b, #020617);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             color: var(--text-main);
-            overflow-x: hidden;
+            padding: 10px;
         }
 
-        /* Estilo Neo-Tactile (Glassmorphism) */
         .container {
-            width: 90%;
-            max-width: 450px;
+            width: 100%;
+            max-width: 480px;
             background: var(--glass-bg);
-            backdrop-filter: blur(15px);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
             border: 1px solid var(--glass-border);
             border-radius: 40px;
-            padding: 30px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            padding: 25px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            max-height: 95vh;
         }
 
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { font-weight: 300; letter-spacing: 2px; }
+        .header { text-align: center; margin-bottom: 20px; position: relative; }
+        .header h1 { font-weight: 300; letter-spacing: 3px; font-size: 1.4rem; color: var(--accent-cyan); }
+        
+        .btn-exit {
+            position: absolute;
+            right: 0; top: 0;
+            background: rgba(255,255,255,0.1);
+            border: none; color: white; padding: 5px 12px;
+            border-radius: 12px; cursor: pointer; font-size: 0.8rem;
+        }
 
         .role-selector {
             display: flex;
-            background: rgba(0,0,0,0.2);
+            background: rgba(0,0,0,0.3);
             border-radius: 20px;
             padding: 5px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .role-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            background: transparent;
-            color: white;
-            cursor: pointer;
-            border-radius: 15px;
-            transition: 0.3s;
+            flex: 1; padding: 12px; border: none; background: transparent;
+            color: rgba(255,255,255,0.6); cursor: pointer; border-radius: 15px;
+            transition: 0.3s; font-weight: bold;
         }
 
         .role-btn.active {
             background: var(--accent-blue);
-            box-shadow: 0 0 15px var(--accent-blue);
+            color: white;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
         }
 
-        /* Formulario */
-        .input-group { margin-bottom: 15px; }
-        input {
-            width: 100%;
-            padding: 15px;
-            border-radius: 15px;
-            border: 1px solid var(--glass-border);
-            background: rgba(255,255,255,0.05);
-            color: white;
-            outline: none;
-        }
+        /* Vistas Scrolleables */
+        .view-content { overflow-y: auto; flex: 1; padding-right: 5px; }
+        .view-content::-webkit-scrollbar { width: 4px; }
+        .view-content::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
 
         .camera-box {
-            width: 100%;
-            height: 200px;
-            background: #000;
-            border-radius: 20px;
-            margin-bottom: 15px;
-            overflow: hidden;
-            position: relative;
-            border: 2px solid var(--glass-border);
+            width: 100%; aspect-ratio: 4/3; background: #000;
+            border-radius: 25px; margin-bottom: 15px; overflow: hidden;
+            position: relative; border: 2px solid var(--glass-border);
+        }
+        video { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Galería de Captura */
+        .photo-gallery {
+            display: grid; grid-template-columns: repeat(5, 1fr);
+            gap: 8px; margin-bottom: 15px;
+        }
+        .thumb {
+            width: 100%; aspect-ratio: 1; border-radius: 10px;
+            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+            object-fit: cover;
         }
 
-        video, canvas { width: 100%; height: 100%; object-fit: cover; }
+        .input-group { margin-bottom: 15px; }
+        input {
+            width: 100%; padding: 16px; border-radius: 18px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.05); color: white;
+            outline: none; font-size: 1rem;
+        }
+
+        .btn-capture {
+            background: var(--accent-cyan); color: #000;
+            margin-bottom: 10px; font-weight: 800;
+        }
 
         .btn-main {
-            width: 100%;
-            padding: 15px;
-            border-radius: 20px;
-            border: none;
-            background: var(--accent-blue);
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
-            transition: 0.3s;
+            width: 100%; padding: 16px; border-radius: 22px; border: none;
+            background: var(--accent-blue); color: white; font-weight: bold;
+            cursor: pointer; transition: 0.3s; margin-top: 5px;
         }
 
-        .btn-main:active { transform: scale(0.98); }
-
-        /* Receptor Listado */
-        .list-item {
-            background: rgba(255,255,255,0.05);
-            border-radius: 20px;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-left: 4px solid var(--accent-cyan);
+        /* Receptor: Estilo Carpeta */
+        .folder-card {
+            background: rgba(255,255,255,0.04);
+            border-radius: 22px; padding: 18px; margin-bottom: 15px;
+            border: 1px solid var(--glass-border);
         }
+        .folder-header { display: flex; justify-content: space-between; font-size: 0.75rem; opacity: 0.7; margin-bottom: 10px; }
+        .folder-title { font-weight: bold; color: var(--accent-cyan); font-size: 1.1rem; }
+        
+        .folder-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 10px; margin-top: 15px;
+        }
+        .folder-grid img { width: 100%; aspect-ratio: 1; border-radius: 12px; object-fit: cover; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); }
 
-        .list-item img { width: 60px; height: 60px; border-radius: 10px; margin-top: 10px; }
-
-        .actions { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn-sec { padding: 8px 15px; border-radius: 10px; border: none; cursor: pointer; font-size: 12px; }
+        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .btn-sec { padding: 12px; border-radius: 15px; border: none; cursor: pointer; font-size: 0.8rem; font-weight: bold; color: white; }
 
         .hidden { display: none; }
-
-        .status-dot {
-            width: 10px; height: 10px; background: var(--accent-cyan);
-            border-radius: 50%; display: inline-block; margin-right: 5px;
-            box-shadow: 0 0 10px var(--accent-cyan);
-        }
+        .loading { opacity: 0.5; pointer-events: none; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div class="header">
+            <button class="btn-exit" onclick="location.reload()">SALIR</button>
             <h1>NEO-TACTILE</h1>
-            <p style="font-size: 0.8rem; opacity: 0.6;">SISTEMA DE ENTREGAS</p>
+            <p style="font-size: 0.7rem; opacity: 0.5; letter-spacing: 1px;">DELIVERY INTELLIGENCE</p>
         </div>
 
         <div class="role-selector">
-            <button class="role-btn active" onclick="switchRole('emisor')">EMISOR</button>
-            <button class="role-btn" onclick="switchRole('receptor')">RECEPTOR</button>
+            <button class="role-btn active" id="tab-emisor" onclick="switchRole('emisor')">EMISOR</button>
+            <button class="role-btn" id="tab-receptor" onclick="switchRole('receptor')">RECEPTOR</button>
         </div>
 
         <!-- VISTA EMISOR -->
-        <div id="view-emisor">
+        <div id="view-emisor" class="view-content">
             <div class="camera-box">
                 <video id="video" autoplay playsinline></video>
                 <canvas id="canvas" class="hidden"></canvas>
             </div>
             
+            <button class="btn-main btn-capture" onclick="takePhoto()">📷 CAPTURAR FOTO (<span id="photo-count">0</span>/5)</button>
+            
+            <div class="photo-gallery" id="preview-gallery">
+                <div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div>
+            </div>
+
             <div class="input-group">
                 <input type="text" id="nombre" placeholder="Nombre del responsable">
             </div>
@@ -163,26 +179,25 @@
                 <input type="text" id="nota" placeholder="N° Nota de Entrega">
             </div>
 
-            <button class="btn-main" onclick="captureAndSend()">ENVIAR AHORA</button>
+            <button class="btn-main" id="send-btn" onclick="uploadAll()">ENVIAR REGISTRO COMPLETO</button>
         </div>
 
         <!-- VISTA RECEPTOR -->
-        <div id="view-receptor" class="hidden">
+        <div id="view-receptor" class="view-content hidden">
             <div class="actions">
-                <button class="btn-sec" style="background: #e11d48; color: white;" onclick="clearToday()">BORRAR DÍA</button>
-                <button class="btn-sec" style="background: #10b981; color: white;" onclick="exportExcel()">EXCEL</button>
-                <button class="btn-sec" style="background: #f59e0b; color: white;" onclick="exportPDF()">PDF</button>
+                <button class="btn-sec" style="background: var(--danger);" onclick="clearToday()">BORRAR TODO</button>
+                <button class="btn-sec" style="background: #10b981;" onclick="exportExcel()">EXCEL</button>
+                <button class="btn-sec" style="background: #f59e0b; grid-column: span 2;" onclick="exportPDF()">DESCARGAR REPORTE PDF (CON FOTOS)</button>
             </div>
             
             <div id="data-list">
-                <!-- Se llena dinámicamente -->
-                <p style="text-align:center; opacity:0.5;">Esperando datos...</p>
+                <p style="text-align:center; opacity:0.3; margin-top:20px;">Sincronizando con la nube...</p>
             </div>
         </div>
     </div>
 
     <script>
-        // 1. CONFIGURACIÓN FIREBASE (REEMPLAZA CON TUS DATOS)
+        // 1. CONFIGURACIÓN FIREBASE
         const firebaseConfig = {
              apiKey: "AIzaSyDia46IAJrJDEuLGA9ULKTlebcjiZ1dYig",
              authDomain: "fotosclientes-c172e.firebaseapp.com",
@@ -196,17 +211,98 @@
         const db = firebase.firestore();
         const storage = firebase.storage();
 
-        // 2. INICIALIZAR CÁMARA
+        // 2. VARIABLES DE ESTADO
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
+        let capturedPhotos = []; // Guardará los blobs de las fotos
 
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then(stream => video.srcObject = stream);
+        // Inicializar cámara
+        function initCamera() {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
+                .then(stream => video.srcObject = stream)
+                .catch(err => alert("Error de cámara: " + err));
+        }
+        initCamera();
 
-        // 3. CAMBIAR ROLES
+        // 3. LÓGICA DE CAPTURA
+        function takePhoto() {
+            if(capturedPhotos.length >= 5) return alert("Máximo 5 fotos por entrega.");
+
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0);
+            
+            canvas.toBlob((blob) => {
+                capturedPhotos.push(blob);
+                updateGallery();
+            }, 'image/jpeg', 0.8);
+        }
+
+        function updateGallery() {
+            const thumbs = document.querySelectorAll('.thumb');
+            document.getElementById('photo-count').innerText = capturedPhotos.length;
+            
+            capturedPhotos.forEach((blob, index) => {
+                const url = URL.createObjectURL(blob);
+                thumbs[index].style.backgroundImage = `url(${url})`;
+                thumbs[index].style.backgroundSize = 'cover';
+            });
+        }
+
+        // 4. SUBIDA MASIVA
+        async function uploadAll() {
+            const nombre = document.getElementById('nombre').value;
+            const nota = document.getElementById('nota').value;
+            const btn = document.getElementById('send-btn');
+
+            if(!nombre || !nota || capturedPhotos.length === 0) {
+                return alert("Por favor, ingrese datos y al menos 1 foto.");
+            }
+
+            btn.classList.add('loading');
+            btn.innerText = "SUBIENDO ARCHIVOS...";
+
+            try {
+                const uploadPromises = capturedPhotos.map(async (blob, i) => {
+                    const ref = storage.ref(`entregas/${Date.now()}_${i}.jpg`);
+                    const snap = await ref.put(blob);
+                    return await snap.ref.getDownloadURL();
+                });
+
+                const urls = await Promise.all(uploadPromises);
+
+                await db.collection("entregas").add({
+                    nombre,
+                    nota,
+                    fotos: urls,
+                    fecha: new Date().toLocaleDateString(),
+                    hora: new Date().toLocaleTimeString(),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert("✅ ENTREGA REGISTRADA CON ÉXITO");
+                resetForm();
+            } catch (e) {
+                alert("Error: " + e.message);
+            } finally {
+                btn.classList.remove('loading');
+                btn.innerText = "ENVIAR REGISTRO COMPLETO";
+            }
+        }
+
+        function resetForm() {
+            capturedPhotos = [];
+            document.getElementById('nombre').value = "";
+            document.getElementById('nota').value = "";
+            document.getElementById('photo-count').innerText = "0";
+            document.querySelectorAll('.thumb').forEach(t => t.style.backgroundImage = '');
+        }
+
+        // 5. RECEPTOR Y TIEMPO REAL
         function switchRole(role) {
             document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            document.getElementById(`tab-${role}`).classList.add('active');
 
             if(role === 'emisor') {
                 document.getElementById('view-emisor').classList.remove('hidden');
@@ -218,50 +314,6 @@
             }
         }
 
-        // 4. CAPTURAR Y ENVIAR (EMISOR)
-        async function captureAndSend() {
-            const nombre = document.getElementById('nombre').value;
-            const nota = document.getElementById('nota').value;
-
-            if(!nombre || !nota) return alert("Completa los campos");
-
-            // Capturar foto del video
-            const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0);
-            
-            const imageData = canvas.toDataURL('image/jpeg');
-            const blob = await (await fetch(imageData)).blob();
-
-            // Subir a Storage
-            const fileName = `entregas/${Date.now()}.jpg`;
-            const storageRef = storage.ref(fileName);
-            
-            try {
-                const snapshot = await storageRef.put(blob);
-                const url = await snapshot.ref.getDownloadURL();
-
-                // Guardar en Firestore
-                await db.collection("entregas").add({
-                    nombre,
-                    nota,
-                    url,
-                    fecha: new Date().toLocaleDateString(),
-                    hora: new Date().toLocaleTimeString(),
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                alert("✅ Enviado con éxito");
-                document.getElementById('nombre').value = "";
-                document.getElementById('nota').value = "";
-            } catch (e) {
-                console.error(e);
-                alert("Error al enviar");
-            }
-        }
-
-        // 5. CARGAR DATOS EN TIEMPO REAL (RECEPTOR)
         let currentData = [];
         function loadData() {
             db.collection("entregas").orderBy("timestamp", "desc").onSnapshot(snapshot => {
@@ -271,42 +323,59 @@
 
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    data.id = doc.id;
                     currentData.push(data);
 
+                    let fotosHTML = data.fotos.map(url => `<img src="${url}" onclick="window.open('${url}')">`).join('');
+
                     list.innerHTML += `
-                        <div class="list-item">
-                            <div style="font-size: 0.8rem; opacity: 0.7;">${data.fecha} - ${data.hora}</div>
-                            <div style="font-weight: bold; margin: 5px 0;">${data.nombre}</div>
-                            <div>Nota: #${data.nota}</div>
-                            <img src="${data.url}" onclick="window.open('${data.url}')">
+                        <div class="folder-card">
+                            <div class="folder-header">
+                                <span>📅 ${data.fecha}</span>
+                                <span>⏰ ${data.hora}</span>
+                            </div>
+                            <div class="folder-title">Nota: #${data.nota}</div>
+                            <div style="font-size: 0.9rem; margin-top:5px; opacity:0.8;">Responsable: ${data.nombre}</div>
+                            <div class="folder-grid">${fotosHTML}</div>
                         </div>
                     `;
                 });
             });
         }
 
-        // 6. EXPORTAR Y LIMPIAR
+        // 6. EXPORTACIONES
         function exportPDF() {
             const element = document.getElementById('data-list');
-            const opt = { margin: 1, filename: 'entregas_dia.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
+            const opt = { 
+                margin: 0.5, 
+                filename: `Reporte_${new Date().toLocaleDateString()}.pdf`,
+                image: { type: 'jpeg', quality: 0.95 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
             html2pdf().set(opt).from(element).save();
         }
 
         function exportExcel() {
-            const ws = XLSX.utils.json_to_sheet(currentData.map(d => ({ Nombre: d.nombre, Nota: d.nota, Fecha: d.fecha, Hora: d.hora, Imagen: d.url })));
+            const excelData = currentData.map(d => ({
+                Responsable: d.nombre,
+                Nota_Entrega: d.nota,
+                Fecha: d.fecha,
+                Hora: d.hora,
+                Links_Fotos: d.fotos.join(' | ')
+            }));
+            const ws = XLSX.utils.json_to_sheet(excelData);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Entregas");
-            XLSX.writeFile(wb, "Reporte_Entregas.xlsx");
+            XLSX.writeFile(wb, `Entregas_${Date.now()}.xlsx`);
         }
 
         async function clearToday() {
-            if(!confirm("¿Estás seguro de vaciar los datos de hoy?")) return;
-            const snapshot = await db.collection("entregas").get();
+            if(!confirm("¿Desea vaciar toda la carpeta de hoy?")) return;
+            const snap = await db.collection("entregas").get();
             const batch = db.batch();
-            snapshot.docs.forEach(doc => batch.delete(doc.ref));
+            snap.docs.forEach(doc => batch.delete(doc.ref));
             await batch.commit();
-            alert("Carpeta puesta a cero.");
+            alert("Sistema en cero.");
         }
     </script>
 </body>
