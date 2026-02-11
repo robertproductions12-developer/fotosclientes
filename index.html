@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neo-Tactile Pro | Download & Sync</title>
+    <title>CLIENTES - DESPACHO ALP</title>
     
+    <!-- Librerías -->
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <style>
         :root {
@@ -17,6 +20,8 @@
             --blue: #3b82f6;
             --glass: rgba(255, 255, 255, 0.05);
             --border: rgba(255, 255, 255, 0.12);
+            --danger: #ff4d4d;
+            --warning: #f59e0b;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
@@ -42,34 +47,29 @@
         .cam-container { width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 30px; overflow: hidden; border: 2px solid var(--border); margin-bottom: 15px; }
         video { width: 100%; height: 100%; object-fit: cover; }
 
-        .btn { width: 100%; padding: 16px; border-radius: 20px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 12px; font-size: 0.9rem; }
-        .btn-cap { background: var(--accent); color: #000; box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
-        .btn-send { background: var(--blue); color: #fff; margin-top: 10px; }
+        .btn { width: 100%; padding: 16px; border-radius: 20px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 12px; font-size: 0.9rem; transition: 0.3s; }
+        .btn:active { transform: scale(0.98); }
+        .btn-cap { background: var(--accent); color: #000; }
+        .btn-send { background: var(--blue); color: #fff; }
 
         .gallery { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
         .thumb { aspect-ratio: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; background-size: cover; background-position: center; }
 
         input { width: 100%; padding: 18px; border-radius: 18px; border: 1px solid var(--border); background: rgba(0,0,0,0.4); color: white; margin-bottom: 12px; outline: none; }
-        input:focus { border-color: var(--accent); }
 
-        /* Receptor: Carpetas Profesionales */
+        /* Receptor */
         .search-container { position: sticky; top: 0; background: var(--bg); z-index: 10; padding-bottom: 10px; }
-        .folder { background: rgba(255,255,255,0.03); border-radius: 30px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); border-top: 4px solid var(--accent); transition: 0.3s; }
-        .folder-title { font-size: 1.2rem; font-weight: bold; color: var(--accent); margin-bottom: 10px; }
-        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 15px; }
+        .folder { background: rgba(255,255,255,0.03); border-radius: 30px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); border-top: 4px solid var(--accent); }
+        .folder-title { font-size: 1.1rem; font-weight: bold; color: var(--accent); margin-bottom: 10px; }
         
-        .img-wrapper { position: relative; border-radius: 12px; overflow: hidden; }
+        .action-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 15px; }
+        .btn-action { padding: 8px; border-radius: 10px; border: none; font-size: 0.7rem; font-weight: bold; cursor: pointer; color: white; }
+
+        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px; margin-top: 15px; }
+        .img-wrapper { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
         .folder-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
         
-        .download-icon {
-            position: absolute; bottom: 5px; right: 5px;
-            background: var(--blue); color: white; width: 25px; height: 25px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 10px; cursor: pointer; text-decoration: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-        }
-
-        .footer-tag { text-align: center; font-size: 0.7rem; color: rgba(255,255,255,0.3); margin-top: 15px; letter-spacing: 2px; }
+        .footer-tag { text-align: center; font-size: 0.7rem; color: rgba(255,255,255,0.3); padding: 15px 0; letter-spacing: 2px; }
         .hidden { display: none; }
     </style>
 </head>
@@ -77,8 +77,8 @@
 
     <div class="app-card">
         <div class="header">
-            <h1 style="font-weight:200; font-size:1.3rem; letter-spacing:3px;">NEO <span style="color:var(--accent)">SYNC</span></h1>
-            <button onclick="location.reload()" style="background:none; border:none; color:var(--accent); font-size:0.7rem; cursor:pointer;">SALIR</button>
+            <h1 style="font-weight:200; font-size:1.1rem; letter-spacing:1px;">CLIENTES - <span style="color:var(--accent)">DESPACHO ALP</span></h1>
+            <button onclick="location.reload()" style="background:none; border:none; color:var(--accent); font-size:0.7rem; cursor:pointer;">REINICIAR</button>
         </div>
 
         <div class="tabs">
@@ -96,7 +96,7 @@
                 <div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div>
             </div>
 
-            <input type="text" id="nombre" placeholder="Cliente">
+            <input type="text" id="nombre" placeholder="Responsable de entrega">
             <input type="text" id="nota" placeholder="N° Nota de Entrega">
             <button class="btn btn-send" id="btn-envio" onclick="enviarAFirebase()">ENVIAR CARPETA COMPLETA</button>
             <p id="status" style="text-align:center; font-size:0.7rem; color:var(--accent)"></p>
@@ -105,17 +105,16 @@
         <!-- VISTA RECEPTOR -->
         <div id="v-receptor" class="view">
             <div class="search-container">
-                <input type="text" id="buscador" placeholder="🔍 Buscar N° Nota de Entrega..." oninput="filtrarCarpetas()">
+                <input type="text" id="buscador" placeholder="🔍 Buscar por N° de Nota..." oninput="filtrarCarpetas()">
             </div>
             
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
-                <button class="btn" style="background:#10b981; margin:0;" onclick="exportExcel()">DESCARGAR EXCEL</button>
-                <button class="btn" style="background:#f59e0b; margin:0;" onclick="exportPDF()">DESCARGAR PDF</button>
-                <button class="btn" style="background:#ef4444; grid-column: span 2;" onclick="vaciarTodo()">VACIAR REGISTROS (REINICIO)</button>
+                <button class="btn" style="background:#10b981; margin:0;" onclick="exportExcelTodos()">EXCEL TODOS</button>
+                <button class="btn" style="background:var(--danger); margin:0;" onclick="vaciarTodo()">BORRAR TODO</button>
             </div>
 
             <div id="listado-realtime">
-                <p style="text-align:center; opacity:0.3; margin-top:20px;">Cargando datos...</p>
+                <p style="text-align:center; opacity:0.3; margin-top:20px;">Buscando registros...</p>
             </div>
         </div>
 
@@ -137,12 +136,12 @@
         const canvas = document.getElementById('canvas');
         let misFotos = [];
 
-        // Inicializar Cámara
+        // Iniciar Cámara
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then(s => video.srcObject = s).catch(e => alert("Cámara bloqueada"));
+            .then(s => video.srcObject = s).catch(e => alert("Acceso a cámara denegado"));
 
         function capturePhoto() {
-            if(misFotos.length >= 5) return alert("Límite: 5 fotos");
+            if(misFotos.length >= 5) return alert("Máximo 5 fotos");
             canvas.width = 640; 
             canvas.height = 480;
             canvas.getContext('2d').drawImage(video, 0, 0, 640, 480);
@@ -156,9 +155,9 @@
         async function enviarAFirebase() {
             const nom = document.getElementById('nombre').value;
             const not = document.getElementById('nota').value;
-            const btn = document.getElementById('btn-envio');
-            if(!nom || !not || misFotos.length === 0) return alert("Llena los campos y toma fotos");
+            if(!nom || !not || misFotos.length === 0) return alert("Complete los datos y tome fotos");
 
+            const btn = document.getElementById('btn-envio');
             btn.disabled = true;
             btn.innerText = "SUBIENDO...";
 
@@ -171,10 +170,10 @@
                     hora: new Date().toLocaleTimeString(),
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                alert("✅ CARPETA GUARDADA");
+                alert("Carpeta guardada exitosamente");
                 location.reload();
             } catch (err) {
-                alert("Error al subir");
+                alert("Error al subir los datos");
                 btn.disabled = false;
             }
         }
@@ -187,92 +186,118 @@
             if(t === 'receptor') iniciarEscucha();
         }
 
-        // Lógica de Búsqueda
         function filtrarCarpetas() {
             const val = document.getElementById('buscador').value.toLowerCase();
             const carpetas = document.querySelectorAll('.folder');
             carpetas.forEach(c => {
-                const numNota = c.getAttribute('data-nota').toLowerCase();
-                c.style.display = numNota.includes(val) ? 'block' : 'none';
+                const nota = c.getAttribute('data-nota').toLowerCase();
+                c.style.display = nota.includes(val) ? 'block' : 'none';
             });
         }
 
-        let datosReceptor = [];
+        let datosGlobales = [];
         function iniciarEscucha() {
             db.collection("entregas").orderBy("timestamp", "desc").onSnapshot(snap => {
                 const contenedor = document.getElementById('listado-realtime');
                 contenedor.innerHTML = "";
-                datosReceptor = [];
-
-                if(snap.empty) {
-                    contenedor.innerHTML = '<p style="text-align:center; opacity:0.3">Sin registros</p>';
-                    return;
-                }
+                datosGlobales = [];
 
                 snap.forEach(doc => {
                     const data = doc.data();
-                    datosReceptor.push(data);
+                    const id = doc.id;
+                    datosGlobales.push({id, ...data});
                     
-                    const fotosHTML = data.imagenes.map((src, i) => `
-                        <div class="img-wrapper">
-                            <img src="${src}" onclick="verGrande('${src}')">
-                            <a href="${src}" download="Nota_${data.nota}_F${i+1}.jpg" class="download-icon">⬇️</a>
-                        </div>
+                    const fotosHTML = data.imagenes.map(src => `
+                        <div class="img-wrapper"><img src="${src}"></div>
                     `).join('');
                     
                     contenedor.innerHTML += `
                         <div class="folder" data-nota="${data.nota}">
-                            <div style="font-size:0.7rem; opacity:0.5; margin-bottom:5px">${data.fecha} | ${data.hora}</div>
-                            <div class="folder-title">NOTA N°: ${data.nota}</div>
-                            <div style="font-size:0.85rem">Responsable: ${data.responsable}</div>
+                            <div style="font-size:0.7rem; opacity:0.5;">${data.fecha} - ${data.hora}</div>
+                            <div class="folder-title">NOTA: ${data.nota}</div>
+                            <div style="font-size:0.85rem">Resp: ${data.responsable}</div>
+                            
                             <div class="folder-grid">${fotosHTML}</div>
+
+                            <div class="action-bar">
+                                <button class="btn-action" style="background:var(--blue)" onclick="descargarZIP('${id}')">ZIP (RAR)</button>
+                                <button class="btn-action" style="background:#10b981;" onclick="exportarExcelUnico('${id}')">EXCEL</button>
+                                <button class="btn-action" style="background:var(--warning)" onclick="editarRegistro('${id}', '${data.nota}', '${data.responsable}')">EDITAR</button>
+                                <button class="btn-action" style="background:var(--danger)" onclick="borrarRegistro('${id}')">ELIMINAR</button>
+                            </div>
                         </div>
                     `;
                 });
             });
         }
 
-        function verGrande(src) {
-            const w = window.open("");
-            w.document.write(`<body style="margin:0; background:#000; display:flex; align-items:center; justify-content:center;"><img src="${src}" style="max-width:100%; height:auto"></body>`);
+        // --- FUNCIONES DE GESTIÓN ---
+
+        async function borrarRegistro(id) {
+            if(confirm("¿Seguro que desea eliminar esta carpeta?")) {
+                await db.collection("entregas").doc(id).delete();
+            }
         }
 
-        function exportPDF() {
-            const element = document.getElementById('listado-realtime');
-            html2pdf().from(element).set({
-                margin: 0.5, filename: 'Reporte_Notas.pdf',
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-            }).save();
+        async function editarRegistro(id, notaOld, respOld) {
+            const nuevaNota = prompt("Nuevo número de nota:", notaOld);
+            const nuevoResp = prompt("Nuevo responsable:", respOld);
+            if(nuevaNota && nuevoResp) {
+                await db.collection("entregas").doc(id).update({
+                    nota: nuevaNota,
+                    responsable: nuevoResp
+                });
+            }
         }
 
-        function exportExcel() {
-            // Se mapean TODOS los datos, incluyendo las fotos como texto base64 para que el Excel sea un respaldo completo
-            const dataParaExcel = datosReceptor.map(d => ({
-                "NOTA DE ENTREGA": d.nota,
-                "RESPONSABLE": d.responsable,
-                "FECHA": d.fecha,
-                "HORA": d.hora,
-                "FOTO 1": d.imagenes[0] || "",
-                "FOTO 2": d.imagenes[1] || "",
-                "FOTO 3": d.imagenes[2] || "",
-                "FOTO 4": d.imagenes[3] || "",
-                "FOTO 5": d.imagenes[4] || ""
+        // --- FUNCIONES DE DESCARGA ---
+
+        function exportExcelTodos() {
+            if(datosGlobales.length === 0) return alert("No hay datos");
+            const simplified = datosGlobales.map(d => ({
+                Nota: d.nota, Responsable: d.responsable, Fecha: d.fecha, Hora: d.hora
             }));
-
-            const ws = XLSX.utils.json_to_sheet(dataParaExcel);
+            const ws = XLSX.utils.json_to_sheet(simplified);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Base de Datos Completa");
-            XLSX.writeFile(wb, `Respaldo_ALP_2026_${new Date().getTime()}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, "Registros");
+            XLSX.writeFile(wb, "Reporte_General_Despacho.xlsx");
+        }
+
+        function exportarExcelUnico(id) {
+            const d = datosGlobales.find(x => x.id === id);
+            const ws = XLSX.utils.json_to_sheet([{
+                Nota: d.nota, Responsable: d.responsable, Fecha: d.fecha, Hora: d.hora, 
+                Fotos_Cant: d.imagenes.length
+            }]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Nota_" + d.nota);
+            XLSX.writeFile(wb, `Nota_${d.nota}.xlsx`);
+        }
+
+        async function descargarZIP(id) {
+            const d = datosGlobales.find(x => x.id === id);
+            const zip = new JSZip();
+            const folder = zip.folder(`Entrega_${d.nota}`);
+
+            // Agregar Datos en TXT
+            const info = `DATOS DE ENTREGA\nNota N°: ${d.nota}\nResponsable: ${d.responsable}\nFecha: ${d.fecha}\nHora: ${d.hora}`;
+            folder.file("detalles.txt", info);
+
+            // Agregar Fotos
+            d.imagenes.forEach((base64, index) => {
+                const imgData = base64.split(',')[1];
+                folder.file(`Foto_${index + 1}.jpg`, imgData, {base64: true});
+            });
+
+            const content = await zip.generateAsync({type: "blob"});
+            saveAs(content, `Entrega_Nota_${d.nota}.zip`);
         }
 
         async function vaciarTodo() {
-            if(!confirm("¿Borrar todos los registros permanentemente?")) return;
+            if(!confirm("¿BORRAR TODA LA BASE DE DATOS? Esta acción no se puede deshacer.")) return;
             const snap = await db.collection("entregas").get();
-            const batch = db.batch();
-            snap.docs.forEach(d => batch.delete(d.ref));
-            await batch.commit();
-            alert("Base de datos reiniciada");
+            snap.forEach(doc => doc.ref.delete());
+            alert("Registros limpiados");
         }
     </script>
 </body>
