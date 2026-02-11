@@ -3,227 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sincronización Real-Time Pro</title>
+    <title>Neo-Tactile No-Storage System</title>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Librerías -->
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-storage-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         :root {
-            --bg: #0d1117;
+            --bg: #020617;
             --accent: #00f2ff;
             --blue: #3b82f6;
-            --glass: rgba(255, 255, 255, 0.08);
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
-        body { background: #020617; color: white; min-height: 100vh; display: flex; justify-content: center; padding: 15px; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: radial-gradient(circle at top right, #1e293b, #020617); color: white; min-height: 100vh; padding: 15px; display: flex; justify-content: center; }
+
+        .app-card {
+            width: 100%; max-width: 450px; background: var(--glass); backdrop-filter: blur(25px);
+            border: 1px solid var(--border); border-radius: 35px; padding: 20px;
+            display: flex; flex-direction: column; height: 94vh; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         
-        .app {
-            width: 100%; max-width: 450px; background: var(--glass);
-            backdrop-filter: blur(20px); border-radius: 35px;
-            border: 1px solid rgba(255,255,255,0.1); padding: 20px;
-            display: flex; flex-direction: column; height: 92vh;
-        }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 20px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: none; color: white; border-radius: 15px; cursor: pointer; font-weight: bold; }
+        .tab-btn.active { background: var(--blue); box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4); }
 
-        .tabs { display: flex; background: rgba(0,0,0,0.3); border-radius: 15px; padding: 5px; margin-bottom: 20px; }
-        .tab { flex: 1; padding: 12px; border: none; background: none; color: white; cursor: pointer; border-radius: 10px; font-weight: bold; }
-        .tab.active { background: var(--blue); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5); }
+        .view { display: none; flex-direction: column; overflow-y: auto; flex: 1; scrollbar-width: none; }
+        .view.active { display: flex; }
+        .view::-webkit-scrollbar { display: none; }
 
-        .view { flex: 1; overflow-y: auto; display: none; }
-        .view.active { display: block; }
-
-        .camera { width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 20px; overflow: hidden; border: 2px solid rgba(255,255,255,0.1); margin-bottom: 15px; }
+        .cam-box { width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 25px; overflow: hidden; border: 2px solid var(--border); margin-bottom: 15px; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        
-        .gallery { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 15px; }
-        .thumb { aspect-ratio: 1; background: rgba(255,255,255,0.1); border-radius: 8px; background-size: cover; border: 1px solid var(--accent); }
 
-        input { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: white; }
-        
-        .btn { width: 100%; padding: 16px; border-radius: 15px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        .btn { width: 100%; padding: 16px; border-radius: 20px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: 0.2s; }
         .btn-cap { background: var(--accent); color: #000; }
         .btn-send { background: var(--blue); color: #fff; }
 
-        /* Receptor Cards */
-        .folder { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 15px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); }
-        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px; margin-top: 10px; }
-        .folder-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
+        .gallery { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 15px; }
+        .thumb { aspect-ratio: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 10px; background-size: cover; background-position: center; }
+
+        input { width: 100%; padding: 16px; border-radius: 15px; border: 1px solid var(--border); background: rgba(0,0,0,0.3); color: white; margin-bottom: 12px; outline: none; }
+
+        /* Receptor */
+        .folder { background: rgba(255,255,255,0.03); border-radius: 25px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border); border-left: 4px solid var(--accent); }
+        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; margin-top: 10px; }
+        .folder-grid img { width: 100%; aspect-ratio: 1; border-radius: 10px; object-fit: cover; }
 
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="app">
-        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h2 style="font-size: 1.2rem; letter-spacing: 2px;">NEO-TACTILE</h2>
-            <button onclick="location.reload()" style="background:none; border:none; color:red; cursor:pointer;">SALIR</button>
+    <div class="app-card">
+        <div class="header">
+            <h2 style="font-weight:200; letter-spacing:2px;">SISTEMA <span style="color:var(--accent)">PRO</span></h2>
+            <button onclick="location.reload()" style="background:none; border:none; color:var(--accent); font-size:0.7rem;">REINICIAR</button>
         </div>
 
         <div class="tabs">
-            <button class="tab active" id="t-emisor" onclick="switchTab('emisor')">EMISOR</button>
-            <button class="tab" id="t-receptor" onclick="switchTab('receptor')">RECEPTOR</button>
+            <button id="t-emisor" class="tab-btn active" onclick="switchTab('emisor')">EMISOR</button>
+            <button id="t-receptor" class="tab-btn" onclick="switchTab('receptor')">RECEPTOR</button>
         </div>
 
         <!-- EMISOR -->
         <div id="v-emisor" class="view active">
-            <div class="camera"><video id="video" autoplay playsinline></video></div>
+            <div class="cam-box"><video id="video" autoplay playsinline></video></div>
             <canvas id="canvas" class="hidden"></canvas>
             
-            <button class="btn btn-cap" onclick="takePhoto()">📷 CAPTURAR FOTO (<span id="count">0</span>/5)</button>
-            <div class="gallery" id="gal">
+            <button class="btn btn-cap" onclick="capturePhoto()">📷 TOMAR FOTO (<span id="count">0</span>/5)</button>
+            <div class="gallery">
                 <div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div>
             </div>
 
             <input type="text" id="nombre" placeholder="Nombre Responsable">
             <input type="text" id="nota" placeholder="Número de Nota">
-            <button class="btn btn-send" id="main-btn" onclick="enviarTodo()">ENVIAR A RECEPTOR</button>
+            <button class="btn btn-send" id="btn-envio" onclick="enviarBase64()">ENVIAR CARPETA A RECEPTOR</button>
+            <p id="status" style="font-size: 0.7rem; text-align: center; color: var(--accent);"></p>
         </div>
 
         <!-- RECEPTOR -->
         <div id="v-receptor" class="view">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
-                <button class="btn" style="background:#10b981; margin:0;" onclick="exportExcel()">EXCEL</button>
-                <button class="btn" style="background:#f59e0b; margin:0;" onclick="exportPDF()">PDF</button>
-                <button class="btn" style="background:#ef4444; grid-column: span 2;" onclick="resetBase()">BORRAR HISTORIAL</button>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px">
+                <button class="btn" style="background:#10b981; margin:0" onclick="exportExcel()">EXCEL</button>
+                <button class="btn" style="background:#f59e0b; margin:0" onclick="exportPDF()">PDF</button>
+                <button class="btn" style="background:#ef4444; grid-column: span 2" onclick="vaciarBase()">BORRAR TODO EL DÍA</button>
             </div>
-            <div id="listado">
-                <p style="text-align:center; opacity:0.5;">Cargando datos en tiempo real...</p>
+            <div id="lista-carpetas">
+                <p style="text-align:center; opacity:0.3; margin-top:20px">Esperando datos...</p>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIGURACIÓN
+        // CONFIGURACIÓN (Firestore Solamente)
         const firebaseConfig = {
              apiKey: "AIzaSyDia46IAJrJDEuLGA9ULKTlebcjiZ1dYig",
              authDomain: "fotosclientes-c172e.firebaseapp.com",
              projectId: "fotosclientes-c172e",
-             storageBucket: "fotosclientes-c172e.firebasestorage.app",
-             messagingSenderId: "538141463863",
-             appId: "1:538141463863:web:eb402c4c67c599397976b2"
+             // No usamos storageBucket aquí
         };
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const storage = firebase.storage();
 
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        let fotos = [];
+        let fotosBase64 = [];
 
-        // Iniciar Cámara
+        // Cámara
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
             .then(s => video.srcObject = s).catch(e => alert("Error cámara: " + e));
 
-        function takePhoto() {
-            if(fotos.length >= 5) return alert("Máximo 5 fotos");
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            canvas.toBlob(blob => {
-                fotos.push(blob);
-                document.getElementById('count').innerText = fotos.length;
-                const thumbs = document.querySelectorAll('.thumb');
-                thumbs[fotos.length-1].style.backgroundImage = `url(${URL.createObjectURL(blob)})`;
-            }, 'image/jpeg', 0.7);
+        // Capturar y Comprimir (CRÍTICO para que quepa en Firestore)
+        function capturePhoto() {
+            if(fotosBase64.length >= 5) return alert("Máximo 5 fotos");
+            
+            // Reducimos tamaño de imagen para que no pese
+            canvas.width = 400; 
+            canvas.height = 300;
+            canvas.getContext('2d').drawImage(video, 0, 0, 400, 300);
+            
+            // Calidad 0.5 (Media) para ahorrar espacio
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+            fotosBase64.push(dataUrl);
+            
+            document.getElementById('count').innerText = fotosBase64.length;
+            const thumbs = document.querySelectorAll('.thumb');
+            thumbs[fotosBase64.length-1].style.backgroundImage = `url(${dataUrl})`;
         }
 
-        async function enviarTodo() {
+        // Enviar como Texto a Firestore
+        async function enviarBase64() {
             const n = document.getElementById('nombre').value;
             const nt = document.getElementById('nota').value;
-            const btn = document.getElementById('main-btn');
+            const btn = document.getElementById('btn-envio');
 
-            if(!n || !nt || fotos.length === 0) return alert("Faltan datos o fotos");
+            if(!n || !nt || fotosBase64.length === 0) return alert("Faltan datos o fotos");
 
             btn.disabled = true;
-            btn.innerText = "SUBIENDO A LA NUBE...";
+            btn.innerText = "SINCRONIZANDO...";
+            document.getElementById('status').innerText = "Comprimiendo carpeta para envío...";
 
             try {
-                // Subir fotos
-                const urls = await Promise.all(fotos.map(async (blob, i) => {
-                    const ref = storage.ref(`entregas/${Date.now()}_${i}.jpg`);
-                    const up = await ref.put(blob);
-                    return await up.ref.getDownloadURL();
-                }));
-
-                // Guardar en base de datos
+                // Guardamos directamente el array de textos (Base64) en Firestore
                 await db.collection("entregas").add({
-                    nombre: n, nota: nt, fotos: urls,
+                    nombre: n,
+                    nota: nt,
+                    fotos: fotosBase64,
                     fecha: new Date().toLocaleDateString(),
                     hora: new Date().toLocaleTimeString(),
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                alert("¡ENVIADO AL RECEPTOR!");
+                alert("✅ GUARDADO EN RECEPTOR (SIN STORAGE)");
                 location.reload();
-            } catch (e) {
-                console.error(e);
-                alert("ERROR: Revisa las REGLAS de tu Firebase Console. " + e.message);
+            } catch (err) {
+                alert("Error: " + err.message);
                 btn.disabled = false;
-                btn.innerText = "ENVIAR A RECEPTOR";
             }
         }
 
         function switchTab(t) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`v-${t}`).classList.add('active');
             document.getElementById(`t-${t}`).classList.add('active');
-            if(t === 'receptor') loadData();
+            if(t === 'receptor') loadRealtime();
         }
 
-        let cacheData = [];
-        function loadData() {
-            // Sincronización en tiempo real con onSnapshot
+        let totalData = [];
+        function loadRealtime() {
             db.collection("entregas").orderBy("timestamp", "desc").onSnapshot(snap => {
-                const list = document.getElementById('listado');
+                const list = document.getElementById('lista-carpetas');
                 list.innerHTML = "";
-                cacheData = [];
+                totalData = [];
 
                 if(snap.empty) {
-                    list.innerHTML = '<p style="text-align:center; opacity:0.3;">Carpeta vacía</p>';
+                    list.innerHTML = '<p style="text-align:center; opacity:0.3">Carpeta de entrada vacía</p>';
                     return;
                 }
 
                 snap.forEach(doc => {
                     const d = doc.data();
-                    cacheData.push(d);
-                    const fts = d.fotos.map(u => `<img src="${u}" onclick="window.open('${u}')">`).join('');
+                    totalData.push(d);
+                    const imgs = d.fotos.map(src => `<img src="${src}" onclick="window.open('${src}')">`).join('');
+                    
                     list.innerHTML += `
                         <div class="folder">
                             <div style="font-size:0.7rem; opacity:0.5;">${d.fecha} | ${d.hora}</div>
-                            <div style="color:var(--accent); font-weight:bold; font-size:1.1rem;">Nota: #${d.nota}</div>
-                            <div style="font-size:0.8rem; margin-bottom:10px;">Resp: ${d.nombre}</div>
-                            <div class="folder-grid">${fts}</div>
+                            <div style="color:var(--accent); font-weight:bold; font-size:1.1rem">NOTA #${d.nota}</div>
+                            <div style="font-size:0.8rem; margin-bottom:10px">Responsable: ${d.nombre}</div>
+                            <div class="folder-grid">${imgs}</div>
                         </div>
                     `;
                 });
-            }, err => {
-                alert("ERROR DE LECTURA: Revisa las reglas de FIRESTORE en Firebase. " + err.message);
             });
         }
 
+        // Exportar
         function exportPDF() {
-            html2pdf().from(document.getElementById('listado')).save('Reporte.pdf');
+            html2pdf().from(document.getElementById('lista-carpetas')).set({
+                margin: 0.5, filename: 'Reporte_Realtime.pdf',
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            }).save();
         }
 
         function exportExcel() {
-            const ws = XLSX.utils.json_to_sheet(cacheData.map(d => ({ Nota: d.nota, Nombre: d.nombre, Fecha: d.fecha, Fotos: d.fotos.join(", ") })));
+            const ws = XLSX.utils.json_to_sheet(totalData.map(d => ({ Nota: d.nota, Nombre: d.nombre, Fecha: d.fecha })));
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Datos");
-            XLSX.writeFile(wb, "Entregas.xlsx");
+            XLSX.writeFile(wb, "Reporte.xlsx");
         }
 
-        async function resetBase() {
-            if(!confirm("¿Borrar todo el historial del receptor?")) return;
-            const s = await db.collection("entregas").get();
-            const b = db.batch();
-            s.docs.forEach(d => b.delete(d.ref));
-            await b.commit();
+        async function vaciarBase() {
+            if(!confirm("¿Borrar todo?")) return;
+            const snap = await db.collection("entregas").get();
+            const batch = db.batch();
+            snap.docs.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
         }
     </script>
 </body>
