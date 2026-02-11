@@ -47,7 +47,7 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
             display: flex;
             flex-direction: column;
-            max-height: 95vh;
+            height: 92vh;
         }
 
         .header { text-align: center; margin-bottom: 20px; position: relative; }
@@ -56,10 +56,13 @@
         .btn-exit {
             position: absolute;
             right: 0; top: 0;
-            background: rgba(255,255,255,0.1);
-            border: none; color: white; padding: 5px 12px;
-            border-radius: 12px; cursor: pointer; font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            color: white; padding: 6px 15px;
+            border-radius: 12px; cursor: pointer; font-size: 0.7rem;
+            transition: 0.3s;
         }
+        .btn-exit:hover { background: var(--danger); }
 
         .role-selector {
             display: flex;
@@ -81,10 +84,9 @@
             box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
         }
 
-        /* Vistas Scrolleables */
         .view-content { overflow-y: auto; flex: 1; padding-right: 5px; }
         .view-content::-webkit-scrollbar { width: 4px; }
-        .view-content::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+        .view-content::-webkit-scrollbar-thumb { background: var(--accent-blue); border-radius: 10px; }
 
         .camera-box {
             width: 100%; aspect-ratio: 4/3; background: #000;
@@ -93,7 +95,6 @@
         }
         video { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Galería de Captura */
         .photo-gallery {
             display: grid; grid-template-columns: repeat(5, 1fr);
             gap: 8px; margin-bottom: 15px;
@@ -101,7 +102,7 @@
         .thumb {
             width: 100%; aspect-ratio: 1; border-radius: 10px;
             background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
-            object-fit: cover;
+            background-position: center; background-size: cover;
         }
 
         .input-group { margin-bottom: 15px; }
@@ -114,35 +115,46 @@
 
         .btn-capture {
             background: var(--accent-cyan); color: #000;
-            margin-bottom: 10px; font-weight: 800;
+            margin-bottom: 10px; font-weight: 800; width: 100%;
+            padding: 16px; border-radius: 22px; border: none; cursor: pointer;
         }
 
         .btn-main {
             width: 100%; padding: 16px; border-radius: 22px; border: none;
             background: var(--accent-blue); color: white; font-weight: bold;
-            cursor: pointer; transition: 0.3s; margin-top: 5px;
+            cursor: pointer; transition: 0.3s;
         }
 
-        /* Receptor: Estilo Carpeta */
+        /* DISEÑO DE CARPETA - RECEPTOR */
         .folder-card {
             background: rgba(255,255,255,0.04);
-            border-radius: 22px; padding: 18px; margin-bottom: 15px;
+            border-radius: 25px; padding: 20px; margin-bottom: 20px;
             border: 1px solid var(--glass-border);
+            position: relative;
         }
-        .folder-header { display: flex; justify-content: space-between; font-size: 0.75rem; opacity: 0.7; margin-bottom: 10px; }
-        .folder-title { font-weight: bold; color: var(--accent-cyan); font-size: 1.1rem; }
+        .folder-card::before {
+            content: '📂'; position: absolute; right: 20px; top: 20px; opacity: 0.2; font-size: 1.5rem;
+        }
+        .folder-header { font-size: 0.75rem; opacity: 0.6; margin-bottom: 8px; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px; }
+        .folder-title { font-weight: bold; color: var(--accent-cyan); font-size: 1.2rem; margin-bottom: 5px; }
         
         .folder-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
             gap: 10px; margin-top: 15px;
         }
-        .folder-grid img { width: 100%; aspect-ratio: 1; border-radius: 12px; object-fit: cover; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); }
+        .folder-grid img { 
+            width: 100%; aspect-ratio: 1; border-radius: 12px; 
+            object-fit: cover; cursor: pointer; 
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: 0.2s;
+        }
+        .folder-grid img:hover { transform: scale(1.05); }
 
         .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .btn-sec { padding: 12px; border-radius: 15px; border: none; cursor: pointer; font-size: 0.8rem; font-weight: bold; color: white; }
 
         .hidden { display: none; }
-        .loading { opacity: 0.5; pointer-events: none; }
+        .loading { opacity: 0.5; pointer-events: none; filter: grayscale(1); }
     </style>
 </head>
 <body>
@@ -151,7 +163,7 @@
         <div class="header">
             <button class="btn-exit" onclick="location.reload()">SALIR</button>
             <h1>NEO-TACTILE</h1>
-            <p style="font-size: 0.7rem; opacity: 0.5; letter-spacing: 1px;">DELIVERY INTELLIGENCE</p>
+            <p style="font-size: 0.7rem; opacity: 0.5;">REAL-TIME DATABASE</p>
         </div>
 
         <div class="role-selector">
@@ -166,7 +178,7 @@
                 <canvas id="canvas" class="hidden"></canvas>
             </div>
             
-            <button class="btn-main btn-capture" onclick="takePhoto()">📷 CAPTURAR FOTO (<span id="photo-count">0</span>/5)</button>
+            <button class="btn-capture" onclick="takePhoto()">📷 TOMAR FOTO (<span id="photo-count">0</span>/5)</button>
             
             <div class="photo-gallery" id="preview-gallery">
                 <div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div>
@@ -179,7 +191,7 @@
                 <input type="text" id="nota" placeholder="N° Nota de Entrega">
             </div>
 
-            <button class="btn-main" id="send-btn" onclick="uploadAll()">ENVIAR REGISTRO COMPLETO</button>
+            <button class="btn-main" id="send-btn" onclick="uploadAll()">ENVIAR CARPETA AHORA</button>
         </div>
 
         <!-- VISTA RECEPTOR -->
@@ -187,11 +199,11 @@
             <div class="actions">
                 <button class="btn-sec" style="background: var(--danger);" onclick="clearToday()">BORRAR TODO</button>
                 <button class="btn-sec" style="background: #10b981;" onclick="exportExcel()">EXCEL</button>
-                <button class="btn-sec" style="background: #f59e0b; grid-column: span 2;" onclick="exportPDF()">DESCARGAR REPORTE PDF (CON FOTOS)</button>
+                <button class="btn-sec" style="background: #f59e0b; grid-column: span 2;" onclick="exportPDF()">DESCARGAR REPORTE PDF COMPLETO</button>
             </div>
             
             <div id="data-list">
-                <p style="text-align:center; opacity:0.3; margin-top:20px;">Sincronizando con la nube...</p>
+                <p style="text-align:center; opacity:0.3; margin-top:20px;">Esperando sincronización...</p>
             </div>
         </div>
     </div>
@@ -211,59 +223,52 @@
         const db = firebase.firestore();
         const storage = firebase.storage();
 
-        // 2. VARIABLES DE ESTADO
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        let capturedPhotos = []; // Guardará los blobs de las fotos
+        let capturedPhotos = []; 
 
         // Inicializar cámara
-        function initCamera() {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
-                .then(stream => video.srcObject = stream)
-                .catch(err => alert("Error de cámara: " + err));
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error("Cámara no disponible", err);
+            }
         }
         initCamera();
 
-        // 3. LÓGICA DE CAPTURA
+        // 3. CAPTURA DE FOTOS
         function takePhoto() {
-            if(capturedPhotos.length >= 5) return alert("Máximo 5 fotos por entrega.");
+            if(capturedPhotos.length >= 5) return alert("Máximo 5 fotos.");
 
-            const context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0);
+            canvas.getContext('2d').drawImage(video, 0, 0);
             
             canvas.toBlob((blob) => {
                 capturedPhotos.push(blob);
-                updateGallery();
+                const thumbs = document.querySelectorAll('.thumb');
+                document.getElementById('photo-count').innerText = capturedPhotos.length;
+                
+                const url = URL.createObjectURL(blob);
+                thumbs[capturedPhotos.length - 1].style.backgroundImage = `url(${url})`;
             }, 'image/jpeg', 0.8);
         }
 
-        function updateGallery() {
-            const thumbs = document.querySelectorAll('.thumb');
-            document.getElementById('photo-count').innerText = capturedPhotos.length;
-            
-            capturedPhotos.forEach((blob, index) => {
-                const url = URL.createObjectURL(blob);
-                thumbs[index].style.backgroundImage = `url(${url})`;
-                thumbs[index].style.backgroundSize = 'cover';
-            });
-        }
-
-        // 4. SUBIDA MASIVA
+        // 4. GUARDAR EN RECEPTOR (STORAGE + FIRESTORE)
         async function uploadAll() {
             const nombre = document.getElementById('nombre').value;
             const nota = document.getElementById('nota').value;
             const btn = document.getElementById('send-btn');
 
-            if(!nombre || !nota || capturedPhotos.length === 0) {
-                return alert("Por favor, ingrese datos y al menos 1 foto.");
-            }
+            if(!nombre || !nota || capturedPhotos.length === 0) return alert("Completa los datos y toma fotos.");
 
             btn.classList.add('loading');
-            btn.innerText = "SUBIENDO ARCHIVOS...";
+            btn.innerText = "SINCRONIZANDO CON RECEPTOR...";
 
             try {
+                // Subir fotos a Storage
                 const uploadPromises = capturedPhotos.map(async (blob, i) => {
                     const ref = storage.ref(`entregas/${Date.now()}_${i}.jpg`);
                     const snap = await ref.put(blob);
@@ -272,6 +277,7 @@
 
                 const urls = await Promise.all(uploadPromises);
 
+                // Guardar "Carpeta" en Firestore para que el receptor la vea
                 await db.collection("entregas").add({
                     nombre,
                     nota,
@@ -281,13 +287,13 @@
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                alert("✅ ENTREGA REGISTRADA CON ÉXITO");
+                alert("✅ DATOS GUARDADOS EN RECEPTOR");
                 resetForm();
             } catch (e) {
-                alert("Error: " + e.message);
+                alert("Error al guardar: " + e.message);
             } finally {
                 btn.classList.remove('loading');
-                btn.innerText = "ENVIAR REGISTRO COMPLETO";
+                btn.innerText = "ENVIAR CARPETA AHORA";
             }
         }
 
@@ -299,7 +305,7 @@
             document.querySelectorAll('.thumb').forEach(t => t.style.backgroundImage = '');
         }
 
-        // 5. RECEPTOR Y TIEMPO REAL
+        // 5. VISTA RECEPTOR (TIEMPO REAL)
         function switchRole(role) {
             document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`tab-${role}`).classList.add('active');
@@ -310,16 +316,22 @@
             } else {
                 document.getElementById('view-emisor').classList.add('hidden');
                 document.getElementById('view-receptor').classList.remove('hidden');
-                loadData();
+                loadData(); // Inicia escucha en tiempo real
             }
         }
 
         let currentData = [];
         function loadData() {
+            // .onSnapshot garantiza el TIEMPO REAL
             db.collection("entregas").orderBy("timestamp", "desc").onSnapshot(snapshot => {
                 const list = document.getElementById('data-list');
                 list.innerHTML = "";
                 currentData = [];
+
+                if(snapshot.empty) {
+                    list.innerHTML = '<p style="text-align:center; opacity:0.3; margin-top:20px;">Carpeta vacía (Cero registros)</p>';
+                    return;
+                }
 
                 snapshot.forEach(doc => {
                     const data = doc.data();
@@ -329,12 +341,9 @@
 
                     list.innerHTML += `
                         <div class="folder-card">
-                            <div class="folder-header">
-                                <span>📅 ${data.fecha}</span>
-                                <span>⏰ ${data.hora}</span>
-                            </div>
-                            <div class="folder-title">Nota: #${data.nota}</div>
-                            <div style="font-size: 0.9rem; margin-top:5px; opacity:0.8;">Responsable: ${data.nombre}</div>
+                            <div class="folder-header">Recibido: ${data.fecha} a las ${data.hora}</div>
+                            <div class="folder-title"># ${data.nota}</div>
+                            <div style="font-size: 0.85rem; opacity:0.8;">Responsable: ${data.nombre}</div>
                             <div class="folder-grid">${fotosHTML}</div>
                         </div>
                     `;
@@ -347,8 +356,8 @@
             const element = document.getElementById('data-list');
             const opt = { 
                 margin: 0.5, 
-                filename: `Reporte_${new Date().toLocaleDateString()}.pdf`,
-                image: { type: 'jpeg', quality: 0.95 },
+                filename: `Reporte_Entregas.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
@@ -357,20 +366,16 @@
 
         function exportExcel() {
             const excelData = currentData.map(d => ({
-                Responsable: d.nombre,
-                Nota_Entrega: d.nota,
-                Fecha: d.fecha,
-                Hora: d.hora,
-                Links_Fotos: d.fotos.join(' | ')
+                Nota: d.nota, Responsable: d.nombre, Fecha: d.fecha, Hora: d.hora, Fotos: d.fotos.join(' , ')
             }));
             const ws = XLSX.utils.json_to_sheet(excelData);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Entregas");
-            XLSX.writeFile(wb, `Entregas_${Date.now()}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, "Historial");
+            XLSX.writeFile(wb, `Entregas_Excel.xlsx`);
         }
 
         async function clearToday() {
-            if(!confirm("¿Desea vaciar toda la carpeta de hoy?")) return;
+            if(!confirm("¿Deseas dejar la carpeta en CERO?")) return;
             const snap = await db.collection("entregas").get();
             const batch = db.batch();
             snap.docs.forEach(doc => batch.delete(doc.ref));
