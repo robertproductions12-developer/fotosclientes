@@ -15,359 +15,319 @@
     <style>
         :root {
             --bg: #010409;
-            --gradient: linear-gradient(135deg, #020617 0%, #0f172a 100%);
             --accent: #00f2ff;
             --blue-neon: #0077ff;
             --glass: rgba(15, 23, 42, 0.85);
             --border: rgba(0, 242, 255, 0.3);
             --danger: #ff4d4d;
             --success: #10b981;
+            --gold: #ffda44;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes neonPulse {
-            0% { box-shadow: 0 0 10px rgba(0, 242, 255, 0.1); border-color: rgba(0, 242, 255, 0.2); }
-            50% { box-shadow: 0 0 20px rgba(0, 242, 255, 0.4); border-color: rgba(0, 242, 255, 0.6); }
-            100% { box-shadow: 0 0 10px rgba(0, 242, 255, 0.1); border-color: rgba(0, 242, 255, 0.2); }
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         
         body { 
             background: var(--bg);
             background-image: radial-gradient(circle at center, #0f172a 0%, #010409 100%);
-            color: white; 
-            min-height: 100vh; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center;
-            padding: 10px;
+            color: white; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 10px; overflow: hidden;
         }
 
         .app-card {
-            width: 100%; 
-            max-width: 480px; 
-            background: var(--glass); 
-            backdrop-filter: blur(25px);
-            border: 2px solid var(--border); 
-            border-radius: 30px; 
-            padding: 20px;
-            height: 95vh; 
-            display: flex; 
-            flex-direction: column;
-            animation: fadeIn 0.6s ease-out, neonPulse 4s infinite;
-            position: relative;
-            overflow: hidden;
+            width: 100%; max-width: 480px; background: var(--glass); backdrop-filter: blur(25px);
+            border: 2px solid var(--border); border-radius: 30px; padding: 20px;
+            height: 95vh; display: flex; flex-direction: column; position: relative; overflow: hidden;
         }
 
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .header h1 { font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; }
-        .header span { color: var(--accent); text-shadow: 0 0 10px var(--accent); }
+        .header span { color: var(--accent); }
 
-        .tabs { 
-            display: flex; gap: 8px; margin-bottom: 15px; background: rgba(0,0,0,0.4); 
-            padding: 5px; border-radius: 15px;
-        }
-        .tab-btn { 
-            flex: 1; padding: 12px; border: none; background: none; color: rgba(255,255,255,0.4); 
-            border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.3s; font-size: 0.8rem;
-        }
-        .tab-btn.active { background: var(--blue-neon); color: white; box-shadow: 0 0 15px rgba(0, 119, 255, 0.5); }
+        .tabs { display: flex; gap: 5px; margin-bottom: 15px; background: rgba(0,0,0,0.4); padding: 5px; border-radius: 15px; }
+        .tab-btn { flex: 1; padding: 10px 5px; border: none; background: none; color: rgba(255,255,255,0.4); border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 0.7rem; }
+        .tab-btn.active { background: var(--blue-neon); color: white; }
 
-        .view { display: none; flex-direction: column; overflow-y: auto; flex: 1; padding-right: 5px; }
-        .view.active { display: flex; animation: fadeIn 0.3s ease-in; }
-        .view::-webkit-scrollbar { width: 4px; }
-        .view::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+        .view { display: none; flex-direction: column; overflow-y: auto; flex: 1; }
+        .view.active { display: flex; }
 
         /* Emisor */
-        .cam-container { 
-            width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 20px; 
-            overflow: hidden; border: 1px solid var(--border); margin-bottom: 12px;
-        }
+        .cam-container { width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 12px; }
         video { width: 100%; height: 100%; object-fit: cover; }
-
-        .btn-group-cam { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; margin-bottom: 12px; }
-        .btn { 
-            width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold; 
-            cursor: pointer; font-size: 0.85rem; transition: 0.3s; color: white;
-            text-transform: uppercase;
-        }
+        .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; color: white; text-transform: uppercase; font-size: 0.8rem; }
         .btn-cap { background: var(--accent); color: #000; }
-        .btn-back { background: #1e293b; }
         .btn-send { background: linear-gradient(90deg, #0077ff, #00d4ff); margin-top: 5px; }
-
         .gallery { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 15px; }
-        .thumb { 
-            aspect-ratio: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); 
-            border-radius: 8px; background-size: cover; background-position: center;
-        }
+        .thumb { aspect-ratio: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; background-size: cover; }
+        input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; margin-bottom: 8px; outline: none; }
 
-        input { 
-            width: 100%; padding: 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); 
-            background: rgba(0,0,0,0.3); color: white; margin-bottom: 8px; outline: none;
-        }
+        /* JUEGO */
+        #game-container { background: #000; border-radius: 20px; position: relative; overflow: hidden; border: 2px solid var(--accent); flex: 1; display: flex; flex-direction: column; }
+        #game-canvas { width: 100%; flex: 1; touch-action: none; }
+        .game-ui { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; font-weight: bold; pointer-events: none; font-size: 0.8rem; }
+        #power-bar { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); padding: 4px 15px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; display: none; }
 
-        /* Receptor / Carpeta */
-        .folder { 
-            background: rgba(255,255,255,0.03); border-radius: 20px; padding: 15px; 
-            margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1);
-            border-left: 4px solid var(--accent);
-        }
-        .folder-title { font-size: 0.95rem; font-weight: bold; color: var(--accent); margin-bottom: 5px; }
+        /* Carpeta */
+        .folder { background: rgba(255,255,255,0.03); border-radius: 20px; padding: 15px; margin-bottom: 15px; border-left: 4px solid var(--accent); }
+        .folder-title { color: var(--accent); font-weight: bold; }
+
+        #modal-viewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
+        #modal-viewer img { max-width: 90%; max-height: 80%; border: 2px solid var(--accent); }
         
-        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 10px; margin-top: 10px; }
-        
-        /* Contenedor de Imagen Individual con Botones */
-        .img-wrapper { position: relative; cursor: pointer; border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
-        .img-wrapper img { width: 100%; aspect-ratio: 1; object-fit: cover; transition: 0.3s; }
-        .img-wrapper:hover img { transform: scale(1.1); }
-        
-        .btn-dl-single { 
-            position: absolute; top: 2px; right: 2px; background: rgba(0, 242, 255, 0.8);
-            border: none; border-radius: 5px; color: #000; width: 22px; height: 22px;
-            font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            z-index: 5; font-weight: bold;
-        }
-
-        .action-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
-        .btn-action { padding: 10px; border-radius: 8px; border: none; font-size: 0.7rem; font-weight: bold; cursor: pointer; color: white; }
-
-        /* MODAL VISUALIZADOR */
-        #modal-viewer {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center;
-            backdrop-filter: blur(10px);
-        }
-        #modal-viewer img { max-width: 95%; max-height: 80%; border-radius: 10px; border: 2px solid var(--accent); box-shadow: 0 0 30px var(--accent); }
-        #modal-viewer .close-modal { position: absolute; top: 20px; right: 20px; color: white; font-size: 30px; cursor: pointer; }
-
-        .footer-tag { text-align: center; font-size: 0.6rem; color: rgba(255,255,255,0.2); padding: 10px 0; letter-spacing: 2px; }
+        .footer-tag { text-align: center; font-size: 0.6rem; color: rgba(255,255,255,0.2); padding: 10px 0; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <!-- VISUALIZADOR DE FOTOS -->
-    <div id="modal-viewer" onclick="cerrarImagen()">
-        <span class="close-modal">&times;</span>
-        <img id="img-full" src="">
-        <p style="position:absolute; bottom:30px; color:var(--accent); font-weight:bold;">TOCA PARA CERRAR</p>
-    </div>
+    <div id="modal-viewer" onclick="this.style.display='none'"><img id="img-full" src=""></div>
 
     <div class="app-card">
         <div class="header">
-            <h1>SISTEMA <span>DESPACHO ALP</span></h1>
-            <button onclick="location.reload()" style="background:none; border:none; color:var(--accent); font-size:0.7rem; cursor:pointer;">RECARGAR</button>
+            <h1>DESPACHO <span>ALP</span></h1>
+            <button onclick="location.reload()" style="background:none; border:none; color:var(--accent); cursor:pointer;">RECARGAR</button>
         </div>
 
         <div class="tabs">
-            <button id="t-emisor" class="tab-btn active" onclick="switchTab('emisor')">MARY DESPACHO</button>
-            <button id="t-receptor" class="tab-btn" onclick="switchTab('receptor')">FELIX PC</button>
+            <button id="t-emisor" class="tab-btn active" onclick="switchTab('emisor')">DESPACHO</button>
+            <button id="t-receptor" class="tab-btn" onclick="switchTab('receptor')">NOTAS</button>
+            <button id="t-juego" class="tab-btn" onclick="switchTab('juego')">🕹️ JUEGO PRO</button>
         </div>
 
-        <!-- VISTA EMISOR -->
+        <!-- EMISOR -->
         <div id="v-emisor" class="view active">
-            <div class="cam-container">
-                <video id="video" autoplay playsinline></video>
-            </div>
+            <div class="cam-container"><video id="video" autoplay playsinline></video></div>
             <canvas id="canvas" class="hidden"></canvas>
-            
-            <div class="btn-group-cam">
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:8px; margin-bottom:12px;">
                 <button class="btn btn-cap" onclick="capturePhoto()">📷 FOTO (<span id="count">0</span>/5)</button>
-                <button class="btn btn-back" onclick="deleteLastPhoto()">↩ ATRÁS</button>
+                <button class="btn" style="background:#1e293b" onclick="deleteLastPhoto()">↩</button>
             </div>
-
-            <div class="gallery">
-                <div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div>
-            </div>
-
+            <div class="gallery"><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div></div>
             <input type="text" id="nombre" placeholder="Nombre del Cliente">
             <input type="text" id="nota" placeholder="N° Nota de Entrega">
-            
             <button class="btn btn-send" id="btn-envio" onclick="enviarAFirebase()">ENVIAR CARPETA</button>
         </div>
 
-        <!-- VISTA RECEPTOR -->
+        <!-- RECEPTOR -->
         <div id="v-receptor" class="view">
-            <input type="text" id="buscador" placeholder="🔍 Buscar por N° de Nota..." oninput="filtrarCarpetas()">
-            
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:12px;">
-                <button class="btn" style="background:var(--success); padding:8px; font-size:0.7rem;" onclick="exportExcelTodos()">EXCEL COMPLETO</button>
-                <button class="btn" style="background:var(--danger); padding:8px; font-size:0.7rem;" onclick="vaciarTodo()">LIMPIAR TODO</button>
-            </div>
+            <input type="text" id="buscador" placeholder="🔍 Buscar Nota..." oninput="filtrarCarpetas()">
+            <div id="listado-realtime"></div>
+        </div>
 
-            <div id="listado-realtime">
-                <p style="text-align:center; opacity:0.3; margin-top:20px;">Sincronizando...</p>
+        <!-- JUEGO -->
+        <div id="v-juego" class="view">
+            <div id="game-container">
+                <div class="game-ui">
+                    <div style="color:var(--accent)">SCORE: <span id="game-score">0</span></div>
+                    <div style="color:var(--gold)">🏆 BEST: <span id="game-high">0</span></div>
+                </div>
+                <div id="power-bar"></div>
+                <canvas id="game-canvas"></canvas>
             </div>
+            <p style="text-align:center; font-size:0.6rem; margin-top:8px; color:var(--accent)">TOCA PARA SALTAR - AZUL: ROMPE | ROJO: PEQUEÑO</p>
         </div>
 
         <div class="footer-tag">ROBERT/ELY/HIMMER/PEDRO/HERNÁN 2026</div>
     </div>
 
     <script>
-        // CONFIGURACIÓN FIREBASE
-        const firebaseConfig = {
-             apiKey: "AIzaSyDia46IAJrJDEuLGA9ULKTlebcjiZ1dYig",
-             authDomain: "fotosclientes-c172e.firebaseapp.com",
-             projectId: "fotosclientes-c172e",
-        };
-
+        // CONFIG FIREBASE
+        const firebaseConfig = { apiKey: "AIzaSyDia46IAJrJDEuLGA9ULKTlebcjiZ1dYig", authDomain: "fotosclientes-c172e.firebaseapp.com", projectId: "fotosclientes-c172e" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // CÁMARA
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         let misFotos = [];
-
-        // Cámara
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 1280 } })
-            .then(s => video.srcObject = s).catch(e => alert("Cámara no disponible"));
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => video.srcObject = s).catch(e => console.log("Cam off"));
 
         function capturePhoto() {
             if(misFotos.length >= 5) return;
             canvas.width = 800; canvas.height = 600;
             canvas.getContext('2d').drawImage(video, 0, 0, 800, 600);
-            misFotos.push(canvas.toDataURL('image/jpeg', 0.8));
+            misFotos.push(canvas.toDataURL('image/jpeg', 0.7));
             actualizarInterfaz();
         }
-
-        function deleteLastPhoto() {
-            misFotos.pop();
-            actualizarInterfaz();
-        }
-
+        function deleteLastPhoto() { misFotos.pop(); actualizarInterfaz(); }
         function actualizarInterfaz() {
             document.getElementById('count').innerText = misFotos.length;
             const thumbs = document.querySelectorAll('.thumb');
-            thumbs.forEach((t, i) => {
-                t.style.backgroundImage = misFotos[i] ? `url(${misFotos[i]})` : 'none';
-                t.style.borderColor = misFotos[i] ? 'var(--accent)' : 'rgba(255,255,255,0.1)';
-            });
+            thumbs.forEach((t, i) => { t.style.backgroundImage = misFotos[i] ? `url(${misFotos[i]})` : 'none'; });
         }
-
         async function enviarAFirebase() {
-            const nom = document.getElementById('nombre').value;
-            const not = document.getElementById('nota').value;
-            if(!nom || !not || misFotos.length === 0) return alert("Faltan datos o fotos");
-
-            const btn = document.getElementById('btn-envio');
-            btn.disabled = true; btn.innerText = "SUBIENDO...";
-
+            const nom = document.getElementById('nombre').value; const not = document.getElementById('nota').value;
+            if(!nom || !not || misFotos.length === 0) return alert("Faltan datos");
             try {
-                await db.collection("entregas").add({
-                    responsable: nom, nota: not, imagenes: misFotos,
-                    fecha: new Date().toLocaleDateString(),
-                    hora: new Date().toLocaleTimeString(),
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                alert("CARPETA GUARDADA CON ÉXITO");
-                location.reload();
-            } catch (err) { alert("Error"); btn.disabled = false; }
+                await db.collection("entregas").add({ responsable: nom, nota: not, imagenes: misFotos, fecha: new Date().toLocaleDateString(), hora: new Date().toLocaleTimeString(), timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                alert("SUBIDO"); location.reload();
+            } catch(e) { alert("Error"); }
         }
 
+        // TABS
         function switchTab(t) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`v-${t}`).classList.add('active');
             document.getElementById(`t-${t}`).classList.add('active');
             if(t === 'receptor') iniciarEscucha();
+            if(t === 'juego') initGame(); else gameActive = false;
         }
 
-        let datosGlobales = [];
         function iniciarEscucha() {
             db.collection("entregas").orderBy("timestamp", "desc").onSnapshot(snap => {
-                const contenedor = document.getElementById('listado-realtime');
-                contenedor.innerHTML = "";
-                datosGlobales = [];
-
-                snap.forEach(doc => {
-                    const data = doc.data();
-                    const id = doc.id;
-                    datosGlobales.push({id, ...data});
-                    
-                    const fotosHTML = data.imagenes.map((src, idx) => `
-                        <div class="img-wrapper">
-                            <button class="btn-dl-single" onclick="event.stopPropagation(); descargarIndividual('${src}', '${data.nota}_${idx+1}')">↓</button>
-                            <img src="${src}" onclick="verImagen('${src}')">
-                        </div>
-                    `).join('');
-                    
-                    contenedor.innerHTML += `
-                        <div class="folder" data-nota="${data.nota}">
-                            <div style="font-size:0.6rem; opacity:0.5;">${data.fecha} • ${data.hora}</div>
-                            <div class="folder-title">NOTA: ${data.nota}</div>
-                            <div style="font-size:0.8rem; color:#aaa;">Cliente: ${data.responsable}</div>
-                            <div class="folder-grid">${fotosHTML}</div>
-                            <div class="action-bar">
-                                <button class="btn-action" style="background:var(--blue-neon)" onclick="descargarZIP('${id}')">ZIP COMPLETO</button>
-                                <button class="btn-action" style="background:var(--danger)" onclick="borrarRegistro('${id}')">ELIMINAR</button>
-                            </div>
-                        </div>
-                    `;
-                });
+                const cont = document.getElementById('listado-realtime'); cont.innerHTML = "";
+                snap.forEach(doc => { const d = doc.data(); cont.innerHTML += `<div class="folder"> <div class="folder-title">NOTA: ${d.nota}</div> <div style="font-size:0.7rem">${d.responsable} - ${d.fecha}</div> </div>`; });
             });
         }
 
-        // FUNCIONES DE VISTA Y DESCARGA
-        function verImagen(src) {
-            document.getElementById('img-full').src = src;
-            document.getElementById('modal-viewer').style.display = 'flex';
-        }
+        // --- MOTOR DEL JUEGO PRO ---
+        const gCanvas = document.getElementById('game-canvas');
+        const gCtx = gCanvas.getContext('2d');
+        let gameActive = false;
+        let score = 0;
+        let highScore = localStorage.getItem('alp_high') || 0;
+        let gameFrame = 0;
+        let speed = 5;
 
-        function cerrarImagen() {
-            document.getElementById('modal-viewer').style.display = 'none';
-        }
+        let player = { 
+            x: 50, y: 0, baseW: 46, baseH: 35, w: 46, h: 35, 
+            dy: 0, jump: -11, grounded: false, 
+            powerType: null, powerTime: 0 
+        };
 
-        function descargarIndividual(src, fileName) {
-            const link = document.createElement('a');
-            link.href = src;
-            link.download = `Foto_${fileName}.jpg`;
-            link.click();
-        }
+        let obstacles = [];
+        let powerups = [];
 
-        async function descargarZIP(id) {
-            const d = datosGlobales.find(x => x.id === id);
-            const zip = new JSZip();
-            const folder = zip.folder(`Entrega_Nota_${d.nota}`);
-            
-            folder.file("INFO_ENTREGA.txt", `CLIENTE: ${d.responsable}\nNOTA: ${d.nota}\nFECHA: ${d.fecha}\nHORA: ${d.hora}`);
-            
-            d.imagenes.forEach((img, i) => {
-                folder.file(`Foto_${i+1}.jpg`, img.split(',')[1], {base64: true});
-            });
-
-            const blob = await zip.generateAsync({type:"blob"});
-            saveAs(blob, `Nota_${d.nota}.zip`);
-        }
-
-        function filtrarCarpetas() {
-            const val = document.getElementById('buscador').value.toLowerCase();
-            document.querySelectorAll('.folder').forEach(c => {
-                c.style.display = c.getAttribute('data-nota').toLowerCase().includes(val) ? 'block' : 'none';
-            });
-        }
-
-        async function borrarRegistro(id) {
-            if(confirm("¿Eliminar carpeta?")) await db.collection("entregas").doc(id).delete();
-        }
-
-        function exportExcelTodos() {
-            const ws = XLSX.utils.json_to_sheet(datosGlobales.map(d => ({Nota: d.nota, Cliente: d.responsable, Fecha: d.fecha})));
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Reporte");
-            XLSX.writeFile(wb, "Reporte_General.xlsx");
-        }
-
-        async function vaciarTodo() {
-            if(confirm("¿BORRAR TODO?")) {
-                const snap = await db.collection("entregas").get();
-                snap.forEach(d => d.ref.delete());
+        function initGame() {
+            gCanvas.width = gCanvas.offsetWidth;
+            gCanvas.height = gCanvas.offsetHeight;
+            player.y = gCanvas.height - 50;
+            document.getElementById('game-high').innerText = highScore;
+            if(!gameActive) {
+                gameActive = true;
+                score = 0; speed = 5; obstacles = []; powerups = [];
+                player.powerType = null;
+                animate();
             }
         }
+
+        function drawForklift(x, y, w, h, type) {
+            gCtx.save();
+            let color = "#ffda44"; // Amarillo normal
+            if(type === 'blue') { color = "#00f2ff"; gCtx.shadowBlur = 15; gCtx.shadowColor = color; }
+            if(type === 'red') { color = "#ff4d4d"; }
+
+            // Cuerpo
+            gCtx.fillStyle = color;
+            gCtx.fillRect(x, y, w - 8, h - 10);
+            // Mástil
+            gCtx.fillStyle = "#333";
+            gCtx.fillRect(x + (w - 10), y - 10, 5, h);
+            // Cabina
+            gCtx.strokeStyle = color;
+            gCtx.lineWidth = 2;
+            gCtx.strokeRect(x + 5, y - 10, w - 20, 10);
+            // Ruedas
+            gCtx.fillStyle = "#000";
+            gCtx.beginPath();
+            gCtx.arc(x + 8, y + (h - 10), 6, 0, Math.PI*2);
+            gCtx.arc(x + (w - 15), y + (h - 10), 6, 0, Math.PI*2);
+            gCtx.fill();
+            gCtx.restore();
+        }
+
+        function animate() {
+            if(!gameActive) return;
+            gCtx.clearRect(0, 0, gCanvas.width, gCanvas.height);
+            gameFrame++;
+
+            // Gravedad
+            player.dy += 0.6;
+            player.y += player.dy;
+            if(player.y > gCanvas.height - player.h - 20) {
+                player.y = gCanvas.height - player.h - 20;
+                player.dy = 0; player.grounded = true;
+            }
+
+            // Manejo de Poderes
+            const pBar = document.getElementById('power-bar');
+            if(player.powerTime > 0) {
+                player.powerTime--;
+                pBar.style.display = 'block';
+                pBar.innerText = (player.powerType === 'blue' ? 'MODO DEMOLICIÓN: ' : 'MODO MINI: ') + Math.ceil(player.powerTime/60) + 's';
+                pBar.style.background = player.powerType === 'blue' ? 'var(--blue-neon)' : 'var(--danger)';
+                
+                if(player.powerType === 'red') {
+                    player.w = player.baseW * 0.6; player.h = player.baseH * 0.6;
+                }
+            } else {
+                player.powerType = null; pBar.style.display = 'none';
+                player.w = player.baseW; player.h = player.baseH;
+            }
+
+            // Suelo
+            gCtx.strokeStyle = "rgba(0,242,255,0.3)";
+            gCtx.beginPath(); gCtx.moveTo(0, gCanvas.height - 20); gCtx.lineTo(gCanvas.width, gCanvas.height - 20); gCtx.stroke();
+
+            // Obstáculos
+            if(gameFrame % 90 === 0) obstacles.push({ x: gCanvas.width, w: 30, h: 30 });
+            obstacles.forEach((obs, i) => {
+                obs.x -= speed;
+                gCtx.fillStyle = "#8B4513";
+                gCtx.fillRect(obs.x, gCanvas.height - 50, obs.w, obs.h);
+                gCtx.strokeRect(obs.x + 5, gCanvas.height - 45, obs.w - 10, obs.h - 10);
+
+                // Colisión
+                if(player.x < obs.x + obs.w && player.x + player.w > obs.x && player.y + player.h > gCanvas.height - 50) {
+                    if(player.powerType === 'blue') {
+                        obstacles.splice(i, 1); score += 100;
+                    } else {
+                        gameOver();
+                    }
+                }
+            });
+
+            // Powerups
+            if(gameFrame % 400 === 0) {
+                powerups.push({ x: gCanvas.width, y: gCanvas.height - 100, type: Math.random() > 0.5 ? 'blue' : 'red' });
+            }
+            powerups.forEach((p, i) => {
+                p.x -= speed;
+                gCtx.fillStyle = p.type === 'blue' ? '#00f2ff' : '#ff4d4d';
+                gCtx.beginPath(); gCtx.arc(p.x, p.y, 10, 0, Math.PI*2); gCtx.fill();
+                
+                if(player.x < p.x + 10 && player.x + player.w > p.x - 10 && player.y < p.y + 10 && player.y + player.h > p.y - 10) {
+                    player.powerType = p.type;
+                    player.powerTime = 600; // 10 segundos (60fps * 10)
+                    powerups.splice(i, 1);
+                }
+            });
+
+            obstacles = obstacles.filter(o => o.x > -50);
+            powerups = powerups.filter(p => p.x > -50);
+            
+            score++; speed += 0.001;
+            document.getElementById('game-score').innerText = Math.floor(score/10);
+            drawForklift(player.x, player.y, player.w, player.h, player.powerType);
+            requestAnimationFrame(animate);
+        }
+
+        function gameOver() {
+            gameActive = false;
+            let finalScore = Math.floor(score/10);
+            if(finalScore > highScore) { highScore = finalScore; localStorage.setItem('alp_high', highScore); }
+            
+            gCtx.fillStyle = "rgba(255,0,0,0.4)";
+            gCtx.fillRect(0,0,gCanvas.width, gCanvas.height);
+            gCtx.fillStyle = "white"; gCtx.textAlign = "center"; gCtx.font = "bold 20px Arial";
+            gCtx.fillText("¡CHOQUE! REINICIANDO...", gCanvas.width/2, gCanvas.height/2);
+            
+            setTimeout(initGame, 1500);
+        }
+
+        // Controles
+        gCanvas.addEventListener('touchstart', e => { e.preventDefault(); if(player.grounded) { player.dy = player.jump; player.grounded = false; } });
+        window.addEventListener('keydown', e => { if(e.code === 'Space' && player.grounded) { player.dy = player.jump; player.grounded = false; } });
+
     </script>
 </body>
 </html>
