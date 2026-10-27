@@ -154,8 +154,8 @@ input:focus,textarea:focus{border-color:var(--accent)}
       <div class="rout" id="rout">Toca el micrófono y di un número de entrega o un nombre de cliente.</div>
       <button class="btn btn-cap" id="btn-escuchar" onclick="escucharRobot()">🎤 Hablar con el cerebro</button>
       <div class="row" style="margin-top:10px;width:100%"><input type="text" id="rtxt" placeholder="O escribe un número / nombre" onkeydown="if(event.key==='Enter')consultarRobot(this.value)"><button class="mic" onclick="consultarRobot(document.getElementById('rtxt').value)">➤</button></div>
-      <div class="lbl" style="margin-top:12px;width:100%">Clave de IA (visión y charla) · se guarda solo en este dispositivo</div>
-      <div class="row" style="width:100%"><input type="password" id="rkey" placeholder="Pega tu clave de Anthropic (sk-ant-...)"><button class="mic" onclick="guardarClave()">💾</button></div>
+      <div class="lbl" style="margin-top:12px;width:100%">Clave de IA GRATIS de Google Gemini (visión y charla) · se guarda solo en este dispositivo</div>
+      <div class="row" style="width:100%"><input type="password" id="rkey" placeholder="Pega tu clave de Gemini (AIza...)"><button class="mic" onclick="guardarClave()">💾</button></div>
     </div>
   </div>
 
@@ -445,16 +445,36 @@ function guardarClave() {
 }
 if (localStorage.getItem('alp_key')) document.getElementById('rkey').placeholder = '✓ Clave guardada en este dispositivo';
 
+const MODELOS_GEMINI = ['gemini-3.8-flash', 'gemini-3.5-flash-lite']; // si Google cambia los nombres, edita aquí
 async function ia(system, messages) {
   const k = localStorage.getItem('alp_key'); if (!k) return null;
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-api-key': k, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: MODELO, max_tokens: 500, system, messages })
-    });
-    const j = await r.json();
-    return (j.content && j.content[0] && j.content[0].text) || null;
+    if (k.startsWith('sk-ant')) {
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-api-key': k, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({ model: MODELO, max_tokens: 500, system, messages })
+      });
+      const j = await r.json();
+      return (j.content && j.content[0] && j.content[0].text) || null;
+    }
+    // Google Gemini (capa gratuita)
+    const contents = messages.map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: typeof m.content === 'string' ? [{ text: m.content }] :
+        m.content.map(c => c.type === 'image' ? { inline_data: { mime_type: 'image/jpeg', data: c.source.data } } : { text: c.text })
+    }));
+    for (const mod of MODELOS_GEMINI) {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mod}:generateContent?key=${encodeURIComponent(k)}`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents })
+      });
+      if (!r.ok) continue;
+      const j = await r.json();
+      const t = j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts.map(p => p.text || '').join('');
+      if (t) return t;
+    }
+    return null;
   } catch (e) { return null; }
 }
 async function charla(texto) {
