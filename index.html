@@ -154,6 +154,8 @@ input:focus,textarea:focus{border-color:var(--accent)}
       <div class="rout" id="rout">Toca el micrófono y di un número de entrega o un nombre de cliente.</div>
       <button class="btn btn-cap" id="btn-escuchar" onclick="escucharRobot()">🎤 Hablar con el cerebro</button>
       <div class="row" style="margin-top:10px;width:100%"><input type="text" id="rtxt" placeholder="O escribe un número / nombre" onkeydown="if(event.key==='Enter')consultarRobot(this.value)"><button class="mic" onclick="consultarRobot(document.getElementById('rtxt').value)">➤</button></div>
+      <div class="lbl" style="margin-top:12px;width:100%">Clave de IA (visión y charla) · se guarda solo en este dispositivo</div>
+      <div class="row" style="width:100%"><input type="password" id="rkey" placeholder="Pega tu clave de Anthropic (sk-ant-...)"><button class="mic" onclick="guardarClave()">💾</button></div>
     </div>
   </div>
 
@@ -235,7 +237,7 @@ function switchTab(t) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(`v-${t}`).classList.add('active');
   document.getElementById(`t-${t}`).classList.add('active');
-  if (t !== 'robot') speechSynthesis.cancel();
+  if (t !== 'robot') speechSynthesis.cancel(); else iniciarCerebro();
 }
 
 let datosGlobales = [];
@@ -392,46 +394,153 @@ async function guardarEdicion() {
 }
 
 // ---------- ROBOT CEREBRO ----------
+const MODELO = 'claude-sonnet-5-5';
 const robotEl = document.getElementById('robot'), rout = document.getElementById('rout'), rstat = document.getElementById('rstat');
-function hablar(texto) {
+const VERSICULOS = [
+  "Todo lo puedo en Cristo que me fortalece. Filipenses 4:13",
+  "Jehová es mi pastor; nada me faltará. Salmo 23:1",
+  "Encomienda a Jehová tu camino, y confía en él; y él hará. Salmo 37:5",
+  "Esfuérzate y sé valiente; no temas ni desmayes, porque Jehová tu Dios estará contigo. Josué 1:9",
+  "Y todo lo que hagáis, hacedlo de corazón, como para el Señor. Colosenses 3:23",
+  "El que es fiel en lo poco, también en lo mucho es fiel. Lucas 16:10",
+  "Mejores son dos que uno; porque tienen mejor paga de su trabajo. Eclesiastés 4:9",
+  "Mira que te mando que te esfuerces y seas valiente. Josué 1:9"
+];
+const verso = () => VERSICULOS[Math.floor(Math.random() * VERSICULOS.length)];
+const PERSONAS = {
+  hernan: { n: 'Hernán', f: 'Jefe, todo marcha bien porque tienes un grupo capacitado.' },
+  mary: { n: 'Mary', f: 'Mary, mantén la paciencia, los clientes esperan una sonrisa de ti.' },
+  elly: { n: 'Elly', f: 'Elly, ojo con el material pendiente, te necesito alerta.' },
+  robert: { n: 'Robert', f: 'Robert, eres muy único, como tú no hay dos. Excelente trabajo, sigue así junto a Pedro y Himmer.' },
+  pedro: { n: 'Pedro', f: 'Pedro, eres un trabajador especial para la empresa, sigue así.' },
+  himmer: { n: 'Himmer', f: 'Himmer, gracias por tu trabajo en el equipo, sigue así.' }
+};
+const norm = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+function identificar(t) {
+  t = norm(t);
+  if (/hernan/.test(t)) return PERSONAS.hernan;
+  if (/mary|mari\b/.test(t)) return PERSONAS.mary;
+  if (/el+y|eli\b|elly/.test(t)) return PERSONAS.elly;
+  if (/robert|roberto/.test(t)) return PERSONAS.robert;
+  if (/pedro/.test(t)) return PERSONAS.pedro;
+  if (/himmer|jimmer|himer/.test(t)) return PERSONAS.himmer;
+  return null;
+}
+let etapa = 'inicio', quien = null, historial = [];
+const robotActivo = () => document.getElementById('v-robot').classList.contains('active');
+const auto = () => setTimeout(() => { if (robotActivo()) { try { escucharRobot(); } catch (e) {} } }, 400);
+
+function hablar(texto, cb) {
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(texto); u.lang = 'es-ES'; u.rate = 1;
   robotEl.classList.add('speaking'); rstat.innerText = "Hablando…";
-  u.onend = u.onerror = () => { robotEl.classList.remove('speaking'); rstat.innerText = "Cerebro ALP en espera"; };
+  u.onend = u.onerror = () => { robotEl.classList.remove('speaking'); rstat.innerText = "Cerebro ALP en espera"; if (cb) cb(); };
   speechSynthesis.speak(u);
+}
+function guardarClave() {
+  const k = document.getElementById('rkey').value.trim();
+  if (!k) return;
+  localStorage.setItem('alp_key', k); document.getElementById('rkey').value = '';
+  document.getElementById('rkey').placeholder = '✓ Clave guardada en este dispositivo'; alert("Clave guardada solo en este dispositivo.");
+}
+if (localStorage.getItem('alp_key')) document.getElementById('rkey').placeholder = '✓ Clave guardada en este dispositivo';
+
+async function ia(system, messages) {
+  const k = localStorage.getItem('alp_key'); if (!k) return null;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': k, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: MODELO, max_tokens: 500, system, messages })
+    });
+    const j = await r.json();
+    return (j.content && j.content[0] && j.content[0].text) || null;
+  } catch (e) { return null; }
+}
+async function charla(texto) {
+  historial.push({ role: 'user', content: texto }); historial = historial.slice(-8);
+  const r = await ia(`Eres el cerebro ALP, un robot amigable de una empresa de despacho. Hablas con ${quien ? quien.n : 'un compañero'}. Conversa cálido y breve (máximo 2 frases), en español, sin markdown.`, historial);
+  if (r) historial.push({ role: 'assistant', content: r });
+  return r;
+}
+async function analizarFotos(d) {
+  const imgs = d.imagenes || [], firma = tam(imgs);
+  if (d.analisisIA && d.analisisFirma === firma) return d.analisisIA;
+  const content = imgs.slice(0, 4).map(img => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: img.split(',')[1] } }));
+  content.push({ type: 'text', text: `Nota ${d.nota}, cliente ${d.responsable}.${d.descripcion ? ' Observación del emisor: ' + d.descripcion : ''}` });
+  const r = await ia("Eres el cerebro ALP, asistente de un almacén de despacho. Responde en español, sin markdown ni listas, máximo 90 palabras: primero describe lo que observas en las fotos (tipo de material, cantidad aproximada, empaque, estado) y luego da un consejo práctico para despachar o almacenar. Si algo no se ve claro, dilo sin inventar.", [{ role: 'user', content }]);
+  if (r) db.collection("entregas").doc(d.id).update({ analisisIA: r, analisisFirma: firma }).catch(() => {});
+  return r;
+}
+
+function iniciarCerebro() {
+  etapa = 'quien'; quien = null; historial = [];
+  const m = "Hola, soy el cerebro ALP. ¿Quién eres?";
+  rout.innerText = m; hablar(m, auto);
 }
 function escucharRobot() {
   if (!SR) return alert("Tu navegador no soporta reconocimiento de voz. Prueba con Chrome o Safari, o escribe abajo.");
   speechSynthesis.cancel();
   const r = new SR(); r.lang = 'es-ES'; r.interimResults = false;
   robotEl.classList.add('listening'); rstat.innerText = "Escuchando…";
-  r.onresult = e => consultarRobot(e.results[0][0].transcript);
+  r.onresult = e => manejar(e.results[0][0].transcript);
   r.onend = () => { robotEl.classList.remove('listening'); if (rstat.innerText === "Escuchando…") rstat.innerText = "Cerebro ALP en espera"; };
   r.onerror = () => robotEl.classList.remove('listening');
   r.start();
 }
-function consultarRobot(q) {
-  q = (q || '').toLowerCase().trim(); if (!q) return;
+function consultarRobot(q) { manejar(q); document.getElementById('rtxt').value = ''; }
+
+function buscar(q) {
+  q = norm(q);
   const nums = q.match(/\d+/g) || [];
   let res = datosGlobales.filter(d => nums.includes(String(d.nota).trim()));
   if (!res.length) {
-    const words = q.split(/\s+/).filter(w => w.length > 2 && !['nota', 'cliente', 'entrega', 'numero', 'número', 'del', 'de', 'la', 'el'].includes(w));
-    res = datosGlobales.filter(d => {
-      const n = String(d.responsable).toLowerCase();
-      return q.includes(n) || words.some(w => n.includes(w));
-    });
+    const words = q.split(/\s+/).filter(w => w.length > 2 && !['nota', 'cliente', 'entrega', 'numero', 'del', 'de', 'la', 'el'].includes(w));
+    res = datosGlobales.filter(d => { const n = norm(String(d.responsable)); return q.includes(n) || words.some(w => n.includes(w)); });
   }
+  return res;
+}
+
+async function manejar(q) {
+  q = (q || '').trim(); if (!q) return;
+  rout.innerText = '🗣️ ' + q;
+  if (etapa === 'inicio' || etapa === 'quien') {
+    const p = identificar(q);
+    if (!p) { const m = "No te reconocí. Dime tu nombre: Hernán, Mary, Elly, Robert o Pedro."; rout.innerText = m; return hablar(m, auto); }
+    quien = p; etapa = 'sentir';
+    const m = `${p.f} Versículo del día: ${verso()}. ¿Cómo te sientes hoy?`;
+    rout.innerText = m; return hablar(m, auto);
+  }
+  if (etapa === 'sentir') {
+    etapa = 'listo';
+    const r = (await charla(q)) || "Me alegra escucharte, aquí estoy para ayudarte.";
+    const m = r + " Dime un número de nota o un nombre de cliente.";
+    rout.innerText = m; return hablar(m, auto);
+  }
+  const res = buscar(q);
   if (!res.length) {
-    const m = `No encontré ninguna entrega con "${q}".`;
-    rout.innerText = m; return hablar(m);
+    const hayNum = /\d/.test(q);
+    const r = !hayNum ? await charla(q) : null;
+    const m = r || `No encontré ninguna entrega con "${q}".`;
+    rout.innerText = m; return hablar(m, auto);
   }
-  const d = res[0];
+  reportar(res);
+}
+async function reportar(res) {
+  const d = res[0], extra = res.length > 1 ? `\n\n(${res.length} resultados, mostrando el más reciente)` : '';
   let voz = `Nota ${d.nota}. Cliente: ${d.responsable}. Fecha: ${d.fecha}. Hora: ${d.hora}. Tiene ${(d.imagenes || []).length} fotos.`;
   voz += d.descripcion ? ` Observación: ${d.descripcion}.` : ` Sin observaciones.`;
   if (d.pendiente) voz += ` Atención, hay material pendiente${d.pendienteDetalle ? ': ' + d.pendienteDetalle : ''}.`;
   if (res.length > 1) voz += ` Encontré ${res.length} resultados, te leí el más reciente.`;
-  rout.innerText = textoInfo(d) + (res.length > 1 ? `\n\n(${res.length} resultados, mostrando el más reciente)` : '');
-  hablar(voz);
+  const base = textoInfo(d) + extra;
+  let analisis = null;
+  if (localStorage.getItem('alp_key')) {
+    rout.innerText = base + '\n\n🔎 Analizando las fotos…'; rstat.innerText = "Analizando…";
+    analisis = await analizarFotos(d);
+  }
+  const v = verso();
+  rout.innerText = base + (analisis ? '\n\n🤖 ' + analisis : (localStorage.getItem('alp_key') ? '\n\n(No pude analizar las fotos ahora.)' : '\n\n(Guarda la clave de IA abajo para que describa las fotos y dé consejos.)')) + '\n\n📖 ' + v;
+  hablar(voz + (analisis ? ' ' + analisis : '') + ' Versículo: ' + v, auto);
 }
 </script>
 </body>
