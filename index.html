@@ -1,405 +1,438 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SISTEMA ALP </title>
-    
-    <!-- Librerías -->
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-
-    <style>
-        :root {
-            --bg: #010409;
-            --accent: #00f2ff;
-            --blue-neon: #0077ff;
-            --glass: rgba(15, 23, 42, 0.9);
-            --border: rgba(0, 242, 255, 0.3);
-            --danger: #ff4d4d;
-            --success: #10b981;
-            --gold: #ffda44;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        
-        body { 
-            background: var(--bg);
-            background-image: radial-gradient(circle at center, #0f172a 0%, #010409 100%);
-            color: white; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 10px; overflow: hidden;
-        }
-
-        .app-card {
-            width: 100%; max-width: 500px; background: var(--glass); backdrop-filter: blur(25px);
-            border: 2px solid var(--border); border-radius: 30px; padding: 20px;
-            height: 95vh; display: flex; flex-direction: column; position: relative; overflow: hidden;
-        }
-
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .header h1 { font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; }
-        .header span { color: var(--accent); }
-
-        .tabs { display: flex; gap: 5px; margin-bottom: 15px; background: rgba(0,0,0,0.4); padding: 5px; border-radius: 15px; }
-        .tab-btn { flex: 1; padding: 10px 5px; border: none; background: none; color: rgba(255,255,255,0.4); border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 0.7rem; }
-        .tab-btn.active { background: var(--blue-neon); color: white; }
-
-        .view { display: none; flex-direction: column; overflow-y: auto; flex: 1; padding-right: 5px; }
-        .view.active { display: flex; }
-
-        /* Estilos Emisor */
-        .cam-container { width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 12px; }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; color: white; text-transform: uppercase; font-size: 0.75rem; transition: 0.3s; }
-        .btn-cap { background: var(--accent); color: #000; }
-        .btn-send { background: linear-gradient(90deg, #0077ff, #00d4ff); margin-top: 5px; }
-        .gallery { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 15px; }
-        .thumb { aspect-ratio: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; background-size: cover; background-position: center; }
-        input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; margin-bottom: 8px; outline: none; }
-
-        /* Estilos Receptor (CARPETAS) */
-        .folder { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 15px; margin-bottom: 20px; border: 1px solid var(--border); border-left: 5px solid var(--accent); position: relative; }
-        .folder-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-        .folder-title { color: var(--accent); font-weight: bold; font-size: 1rem; }
-        .folder-info { font-size: 0.7rem; color: rgba(255,255,255,0.6); line-height: 1.4; }
-        
-        .grid-fotos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
-        .foto-item { position: relative; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
-        .foto-item img { width: 100%; aspect-ratio: 1; object-fit: cover; cursor: pointer; }
-        .btn-dl-small { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.7); border: none; color: var(--accent); font-size: 0.6rem; padding: 4px; cursor: pointer; }
-
-        .btn-zip { background: var(--success); margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-del { background: none; border: 1px solid var(--danger); color: var(--danger); padding: 5px 10px; border-radius: 8px; font-size: 0.6rem; cursor: pointer; }
-        .btn-del-all { background: var(--danger); margin-bottom: 15px; font-size: 0.7rem; letter-spacing: 1px; }
-
-        /* Juego */
-        #game-container { background: #000; border-radius: 20px; position: relative; overflow: hidden; border: 2px solid var(--accent); flex: 1; display: flex; flex-direction: column; }
-        #game-canvas { width: 100%; flex: 1; touch-action: none; }
-        .game-ui { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; font-weight: bold; pointer-events: none; font-size: 0.8rem; }
-        #power-bar { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); padding: 4px 15px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; display: none; }
-
-        #modal-viewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
-        #modal-viewer img { max-width: 95%; max-height: 80%; border: 2px solid var(--accent); border-radius: 10px; }
-        
-        .footer-tag { text-align: center; font-size: 0.6rem; color: rgba(255,255,255,0.2); padding: 10px 0; }
-        .hidden { display: none; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SISTEMA ALP</title>
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<style>
+:root{--bg:#010409;--accent:#00f2ff;--blue:#0a84ff;--glass:rgba(15,23,42,.88);--border:rgba(0,242,255,.28);--danger:#ff453a;--success:#30d158;--gold:#ffd60a;--t2:rgba(235,235,245,.6)}
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
+body{background:var(--bg) radial-gradient(circle at center,#0f172a 0%,#010409 100%);color:#fff;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:10px;overflow:hidden}
+.app-card{width:100%;max-width:500px;background:var(--glass);backdrop-filter:blur(30px);border:1px solid var(--border);border-radius:34px;padding:20px;height:96vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.header h1{font-size:1.35rem;font-weight:700;letter-spacing:-.03em}.header span{color:var(--accent)}
+.tabs{display:flex;gap:2px;margin-bottom:14px;background:rgba(118,118,128,.24);padding:3px;border-radius:12px}
+.tab-btn{flex:1;padding:9px 4px;border:none;background:none;color:var(--t2);border-radius:9px;cursor:pointer;font-weight:600;font-size:.78rem}
+.tab-btn.active{background:var(--blue);color:#fff;box-shadow:0 2px 8px rgba(10,132,255,.4)}
+.view{display:none;flex-direction:column;overflow-y:auto;flex:1;padding-right:4px}.view.active{display:flex}
+.cam-container{width:100%;aspect-ratio:4/3;background:#000;border-radius:22px;overflow:hidden;border:1px solid var(--border);margin-bottom:12px;flex-shrink:0}
+video{width:100%;height:100%;object-fit:cover}
+.btn{width:100%;padding:14px;border-radius:14px;border:none;font-weight:600;cursor:pointer;color:#fff;font-size:.85rem;transition:.2s}
+.btn:active{transform:scale(.97);opacity:.85}
+.btn-cap{background:var(--accent);color:#000}
+.btn-send{background:linear-gradient(90deg,#0a84ff,#00d4ff);margin-top:6px}
+.btn-gray{background:rgba(118,118,128,.35)}
+.gallery{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px}
+.thumb{aspect-ratio:1;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:9px;background-size:cover;background-position:center}
+input,textarea{width:100%;padding:13px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.35);color:#fff;margin-bottom:8px;outline:none;font-size:.92rem;resize:none}
+input:focus,textarea:focus{border-color:var(--accent)}
+.row{display:flex;gap:8px;align-items:flex-start}.row textarea{flex:1}
+.mic{width:48px;height:48px;border-radius:14px;border:none;background:rgba(10,132,255,.25);font-size:1.2rem;cursor:pointer;flex-shrink:0}
+.mic.on{background:var(--danger);animation:pulse 1s infinite}
+.chk{display:flex;align-items:center;gap:10px;font-size:.88rem;margin:4px 0 8px;color:var(--gold);font-weight:600}
+.chk input{width:22px;height:22px;margin:0}
+.lbl{font-size:.7rem;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin:4px 0 6px;font-weight:600}
+.folder{background:rgba(255,255,255,.05);border-radius:22px;padding:15px;margin-bottom:16px;border:1px solid var(--border);border-left:4px solid var(--accent)}
+.folder.pend{border-left-color:var(--gold)}
+.folder-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
+.folder-title{color:var(--accent);font-weight:700;font-size:1.05rem}
+.folder-info{font-size:.75rem;color:var(--t2);line-height:1.5}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:.65rem;font-weight:700;margin:6px 0}
+.b-p{background:rgba(255,214,10,.15);color:var(--gold)}.b-ok{background:rgba(48,209,88,.15);color:var(--success)}
+.obs{font-size:.8rem;background:rgba(0,0,0,.3);border-radius:12px;padding:10px;margin-top:6px;line-height:1.45}
+.grid-fotos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.foto-item{position:relative;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.1)}
+.foto-item img{width:100%;aspect-ratio:1;object-fit:cover;cursor:pointer;display:block}
+.btn-dl-small{position:absolute;bottom:0;width:100%;background:rgba(0,0,0,.7);border:none;color:var(--accent);font-size:.62rem;padding:5px;cursor:pointer}
+.btn-x{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;border:none;background:var(--danger);color:#fff;font-weight:700;cursor:pointer}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.btn-s{padding:11px;font-size:.75rem}
+.btn-zip{background:var(--success);color:#000}.btn-share{background:var(--blue)}.btn-edit{background:rgba(118,118,128,.4)}.btn-ok{background:var(--gold);color:#000}
+.btn-del{background:none;border:1px solid var(--danger);color:var(--danger);padding:6px 11px;border-radius:10px;font-size:.65rem;cursor:pointer;font-weight:600}
+.btn-del-all{background:var(--danger);margin-bottom:12px;font-size:.75rem}
+#modal-viewer,#modal-edit{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:1000;justify-content:center;align-items:center}
+#modal-viewer img{max-width:95%;max-height:80%;border:2px solid var(--accent);border-radius:12px}
+#modal-edit{align-items:flex-start;overflow-y:auto;padding:16px}
+.edit-box{width:100%;max-width:500px;margin:auto;background:#0b1220;border:1px solid var(--border);border-radius:26px;padding:20px}
+.edit-box h2{font-size:1.15rem;margin-bottom:12px}
+/* ROBOT */
+.robot-wrap{display:flex;flex-direction:column;align-items:center;flex:1}
+.robot{position:relative;margin:14px 0 8px;display:flex;flex-direction:column;align-items:center}
+.antenna{width:4px;height:26px;background:var(--accent);position:relative}
+.antenna i{position:absolute;top:-9px;left:-6px;width:16px;height:16px;border-radius:50%;background:var(--accent);box-shadow:0 0 18px var(--accent);animation:pulse 1.4s infinite}
+.rbox{position:relative;width:230px;height:170px;background:linear-gradient(145deg,#0f1b30,#05080f);border:2px solid var(--accent);border-radius:22px;box-shadow:0 0 30px rgba(0,242,255,.35),inset 0 0 30px rgba(0,119,255,.25);display:flex;justify-content:center;align-items:center;overflow:hidden}
+.rbox::before{content:"";position:absolute;inset:6px;border:1px dashed rgba(0,242,255,.3);border-radius:16px}
+.arcs{position:absolute;inset:0;width:100%;height:100%}
+.arcs polyline{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round;filter:drop-shadow(0 0 4px var(--accent));animation:zap 1.2s infinite}
+.arcs polyline:nth-child(2){animation-delay:.4s;stroke:#58a6ff}.arcs polyline:nth-child(3){animation-delay:.8s}
+.screen{position:relative;width:170px;height:86px;background:#00060f;border:1px solid var(--border);border-radius:14px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;z-index:2}
+.eyes{display:flex;gap:26px}.eyes b{width:20px;height:20px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent);animation:blink 4s infinite}
+.wave{display:flex;gap:3px;align-items:center;height:16px}.wave s{width:4px;height:4px;background:var(--accent);border-radius:2px}
+.robot.listening .rbox{box-shadow:0 0 50px rgba(48,209,88,.7),inset 0 0 30px rgba(48,209,88,.3);border-color:var(--success)}
+.robot.listening .eyes b{background:var(--success);box-shadow:0 0 14px var(--success)}
+.robot.speaking .wave s{animation:bar .5s infinite alternate}.robot.speaking .wave s:nth-child(2n){animation-delay:.2s}
+.robot.listening .wave s{animation:bar .8s infinite alternate}
+.rstat{font-size:.78rem;color:var(--accent);font-weight:600;margin:6px 0 10px;letter-spacing:.04em;text-transform:uppercase}
+.rout{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:16px;padding:14px;font-size:.85rem;line-height:1.55;min-height:90px;white-space:pre-line;margin-bottom:10px}
+@keyframes pulse{50%{opacity:.45}}@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+@keyframes zap{0%,100%{opacity:0}10%,30%{opacity:1}50%{opacity:.1}}@keyframes bar{to{height:16px}}
+.footer-tag{text-align:center;font-size:.6rem;color:rgba(255,255,255,.25);padding:10px 0 0}
+.hidden{display:none}
+</style>
 </head>
 <body>
+<div id="modal-viewer" onclick="this.style.display='none'"><img id="img-full" src=""></div>
 
-    <div id="modal-viewer" onclick="this.style.display='none'"><img id="img-full" src=""></div>
+<div id="modal-edit"><div class="edit-box">
+  <h2>Editar expediente</h2>
+  <input type="text" id="e-nombre" placeholder="Nombre del Cliente / Receptor">
+  <input type="text" id="e-nota" placeholder="Número de Nota de Entrega">
+  <div class="row"><textarea id="e-desc" rows="3" placeholder="Descripción de cómo se fue el material"></textarea><button class="mic" onclick="dictar('e-desc',this)">🎤</button></div>
+  <label class="chk"><input type="checkbox" id="e-pend"> Material pendiente</label>
+  <input type="text" id="e-pend-det" placeholder="¿Qué material queda pendiente? (opcional)">
+  <div class="lbl">Fotos (<span id="e-count">0</span>/10)</div>
+  <div class="grid-fotos" id="e-fotos"></div>
+  <input type="file" id="e-file" accept="image/*" multiple class="hidden" onchange="agregarFotosEdicion(this)">
+  <button class="btn btn-gray" onclick="document.getElementById('e-file').click()">📷 Agregar / tomar foto</button>
+  <div class="acts" style="margin-top:12px">
+    <button class="btn btn-gray" onclick="cerrarEdicion()">Cancelar</button>
+    <button class="btn btn-send" style="margin:0" id="btn-guardar" onclick="guardarEdicion()">Guardar cambios</button>
+  </div>
+</div></div>
 
-    <div class="app-card">
-        <div class="header">
-            <h1>DESPACHO <span>ALP</span></h1>
-            <div style="font-size: 0.6rem; text-align: right;">2026<br><span id="status" style="color:var(--success)">CONECTADO</span></div>
-        </div>
+<div class="app-card">
+  <div class="header">
+    <h1>Despacho <span>ALP</span></h1>
+    <div style="font-size:.65rem;text-align:right;color:var(--t2)">2026<br><span id="status" style="color:var(--success)">● Conectado</span></div>
+  </div>
+  <div class="tabs">
+    <button id="t-emisor" class="tab-btn active" onclick="switchTab('emisor')">Emisor</button>
+    <button id="t-receptor" class="tab-btn" onclick="switchTab('receptor')">Receptor</button>
+    <button id="t-robot" class="tab-btn" onclick="switchTab('robot')">🤖 Cerebro</button>
+  </div>
 
-        <div class="tabs">
-            <button id="t-emisor" class="tab-btn active" onclick="switchTab('emisor')">EMISOR</button>
-            <button id="t-receptor" class="tab-btn" onclick="switchTab('receptor')">RECEPTOR</button>
-            <button id="t-juego" class="tab-btn" onclick="switchTab('juego')">🎮 RELAX</button>
-        </div>
-
-        <!-- VISTA EMISOR -->
-        <div id="v-emisor" class="view active">
-            <div class="cam-container"><video id="video" autoplay playsinline></video></div>
-            <canvas id="canvas" class="hidden"></canvas>
-            
-            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:8px; margin-bottom:12px;">
-                <button class="btn btn-cap" onclick="capturePhoto()">📷 CAPTURAR (<span id="count">0</span>/5)</button>
-                <button class="btn" style="background:#1e293b" onclick="deleteLastPhoto()">BORRAR ÚLTIMA</button>
-            </div>
-
-            <div class="gallery">
-                <div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div><div class="thumb"></div>
-            </div>
-
-            <input type="text" id="nombre" placeholder="Nombre del Cliente / Receptor">
-            <input type="text" id="nota" placeholder="Número de Nota de Entrega">
-            <button class="btn btn-send" id="btn-envio" onclick="enviarAFirebase()">🚀 SUBIR EXPEDIENTE</button>
-        </div>
-
-        <!-- VISTA RECEPTOR -->
-        <div id="v-receptor" class="view">
-            <button class="btn btn-del-all" onclick="eliminarTodo()">⚠️ ELIMINAR TODA LA BASE DE DATOS</button>
-            <input type="text" id="buscador" placeholder="🔍 Buscar por N° de Nota..." oninput="filtrarCarpetas()">
-            <div id="listado-realtime">
-                <!-- Se llena con Firebase -->
-            </div>
-        </div>
-
-        <!-- VISTA JUEGO -->
-        <div id="v-juego" class="view">
-            <div id="game-container">
-                <div class="game-ui">
-                    <div style="color:var(--accent)">PUNTOS: <span id="game-score">0</span></div>
-                    <div style="color:var(--gold)">RÉCORD: <span id="game-high">0</span></div>
-                </div>
-                <div id="power-bar"></div>
-                <canvas id="game-canvas"></canvas>
-            </div>
-            <p style="text-align:center; font-size:0.6rem; margin-top:8px; color:rgba(255,255,255,0.4)">TOCA PARA SALTAR Y ESQUIVAR CAJAS</p>
-        </div>
-
-        <div class="footer-tag">SISTEMA INTEGRAL ALP © 2026 - ROBERT/ELY/HIMMER/PEDRO/HERNÁN</div>
+  <!-- EMISOR -->
+  <div id="v-emisor" class="view active">
+    <div class="cam-container"><video id="video" autoplay playsinline></video></div>
+    <canvas id="canvas" class="hidden"></canvas>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:12px">
+      <button class="btn btn-cap" onclick="capturePhoto()">📷 Capturar (<span id="count">0</span>/10)</button>
+      <button class="btn btn-gray" onclick="deleteLastPhoto()">Borrar última</button>
     </div>
+    <div class="gallery" id="gallery"></div>
+    <input type="text" id="nombre" placeholder="Nombre del Cliente / Receptor">
+    <input type="text" id="nota" placeholder="Número de Nota de Entrega">
+    <div class="lbl">Descripción de cómo se fue el material (opcional)</div>
+    <div class="row"><textarea id="desc" rows="3" placeholder="Escribe o dicta con el micrófono…"></textarea><button class="mic" onclick="dictar('desc',this)">🎤</button></div>
+    <label class="chk"><input type="checkbox" id="pend" onchange="document.getElementById('pend-det').classList.toggle('hidden',!this.checked)"> Quedó material pendiente</label>
+    <input type="text" id="pend-det" class="hidden" placeholder="¿Qué material queda pendiente? (opcional)">
+    <button class="btn btn-send" id="btn-envio" onclick="enviarAFirebase()">🚀 Subir expediente</button>
+  </div>
 
-    <script>
-        // CONFIGURACIÓN FIREBASE (Usa tu propia configuración si esta expira)
-        const firebaseConfig = { 
-            apiKey: "AIzaSyDia46IAJrJDEuLGA9ULKTlebcjiZ1dYig", 
-            authDomain: "fotosclientes-c172e.firebaseapp.com", 
-            projectId: "fotosclientes-c172e" 
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+  <!-- RECEPTOR -->
+  <div id="v-receptor" class="view">
+    <button class="btn btn-del-all" onclick="eliminarTodo()">⚠️ Eliminar toda la base de datos</button>
+    <input type="text" id="buscador" placeholder="🔍 Buscar por N° de Nota o cliente..." oninput="filtrarCarpetas()">
+    <div id="listado-realtime"></div>
+  </div>
 
-        // --- LÓGICA EMISOR ---
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        let misFotos = [];
+  <!-- ROBOT -->
+  <div id="v-robot" class="view">
+    <div class="robot-wrap">
+      <div class="robot" id="robot">
+        <div class="antenna"><i></i></div>
+        <div class="rbox">
+          <svg class="arcs" viewBox="0 0 230 170"><polyline points="6,30 30,38 20,52 46,58"/><polyline points="224,120 200,112 210,98 186,92"/><polyline points="14,150 38,140 30,128 56,122"/></svg>
+          <div class="screen"><div class="eyes"><b></b><b></b></div><div class="wave"><s></s><s></s><s></s><s></s><s></s><s></s><s></s></div></div>
+        </div>
+      </div>
+      <div class="rstat" id="rstat">Cerebro ALP en espera</div>
+      <div class="rout" id="rout">Toca el micrófono y di un número de entrega o un nombre de cliente.</div>
+      <button class="btn btn-cap" id="btn-escuchar" onclick="escucharRobot()">🎤 Hablar con el cerebro</button>
+      <div class="row" style="margin-top:10px;width:100%"><input type="text" id="rtxt" placeholder="O escribe un número / nombre" onkeydown="if(event.key==='Enter')consultarRobot(this.value)"><button class="mic" onclick="consultarRobot(document.getElementById('rtxt').value)">➤</button></div>
+    </div>
+  </div>
 
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then(s => video.srcObject = s)
-            .catch(e => alert("Error cámara: " + e));
+  <div class="footer-tag">SISTEMA INTEGRAL ALP © 2026 - ROBERT/ELY/HIMMER/PEDRO/HERNÁN</div>
+</div>
 
-        function capturePhoto() {
-            if(misFotos.length >= 5) return alert("Máximo 5 fotos por nota");
-            canvas.width = 800; canvas.height = 600;
-            canvas.getContext('2d').drawImage(video, 0, 0, 800, 600);
-            misFotos.push(canvas.toDataURL('image/jpeg', 0.7));
-            actualizarInterfaz();
-        }
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDia46IAJrJDEuLGA9ULKTlebcjiZ1dYig",
+  authDomain: "fotosclientes-c172e.firebaseapp.com",
+  projectId: "fotosclientes-c172e"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const MAX_FOTOS = 10, MAX_BYTES = 950000;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const tam = arr => arr.reduce((a, b) => a + b.length, 0);
 
-        function deleteLastPhoto() { misFotos.pop(); actualizarInterfaz(); }
+// ---------- EMISOR ----------
+const video = document.getElementById('video'), canvas = document.getElementById('canvas');
+let misFotos = [];
+navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+  .then(s => video.srcObject = s).catch(e => alert("Error cámara: " + e));
 
-        function actualizarInterfaz() {
-            document.getElementById('count').innerText = misFotos.length;
-            const thumbs = document.querySelectorAll('.thumb');
-            thumbs.forEach((t, i) => { 
-                t.style.backgroundImage = misFotos[i] ? `url(${misFotos[i]})` : 'none'; 
-            });
-        }
+function capturePhoto() {
+  if (misFotos.length >= MAX_FOTOS) return alert("Máximo " + MAX_FOTOS + " fotos por nota");
+  canvas.width = 720; canvas.height = 540;
+  canvas.getContext('2d').drawImage(video, 0, 0, 720, 540);
+  misFotos.push(canvas.toDataURL('image/jpeg', 0.6));
+  actualizarInterfaz();
+}
+function deleteLastPhoto() { misFotos.pop(); actualizarInterfaz(); }
+function actualizarInterfaz() {
+  document.getElementById('count').innerText = misFotos.length;
+  document.getElementById('gallery').innerHTML = Array.from({length: MAX_FOTOS}, (_, i) =>
+    `<div class="thumb" style="background-image:${misFotos[i] ? `url(${misFotos[i]})` : 'none'}"></div>`).join('');
+}
+actualizarInterfaz();
 
-        async function enviarAFirebase() {
-            const nom = document.getElementById('nombre').value;
-            const not = document.getElementById('nota').value;
-            const btn = document.getElementById('btn-envio');
+async function enviarAFirebase() {
+  const nom = document.getElementById('nombre').value.trim();
+  const not = document.getElementById('nota').value.trim();
+  const btn = document.getElementById('btn-envio');
+  if (!nom || !not || misFotos.length === 0) return alert("Faltan datos o fotos");
+  if (tam(misFotos) > MAX_BYTES) return alert("Las fotos pesan demasiado para una sola carpeta. Borra alguna.");
+  const pend = document.getElementById('pend').checked;
+  btn.disabled = true; btn.innerText = "SUBIENDO...";
+  try {
+    await db.collection("entregas").add({
+      responsable: nom, nota: not, imagenes: misFotos,
+      descripcion: document.getElementById('desc').value.trim(),
+      pendiente: pend,
+      pendienteDetalle: pend ? document.getElementById('pend-det').value.trim() : "",
+      fecha: new Date().toLocaleDateString(), hora: new Date().toLocaleTimeString(),
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    alert("CARPETA GUARDADA CON ÉXITO");
+    location.reload();
+  } catch (e) { alert("Error al subir"); btn.disabled = false; btn.innerText = "🚀 Subir expediente"; }
+}
 
-            if(!nom || !not || misFotos.length === 0) return alert("Faltan datos o fotos");
-            
-            btn.disabled = true;
-            btn.innerText = "SUBIENDO...";
+// ---------- DICTADO ----------
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+function dictar(id, btn) {
+  if (!SR) return alert("Tu navegador no soporta dictado por voz. Prueba con Chrome o Safari.");
+  const r = new SR(); r.lang = 'es-ES'; r.interimResults = false;
+  btn.classList.add('on');
+  r.onresult = e => {
+    const el = document.getElementById(id);
+    el.value = (el.value + ' ' + e.results[0][0].transcript).trim();
+  };
+  r.onend = r.onerror = () => btn.classList.remove('on');
+  r.start();
+}
 
-            try {
-                await db.collection("entregas").add({ 
-                    responsable: nom, 
-                    nota: not, 
-                    imagenes: misFotos, 
-                    fecha: new Date().toLocaleDateString(), 
-                    hora: new Date().toLocaleTimeString(), 
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp() 
-                });
-                alert("CARPETA GUARDADA CON ÉXITO");
-                location.reload();
-            } catch(e) { 
-                alert("Error al subir"); 
-                btn.disabled = false;
-            }
-        }
+// ---------- RECEPTOR ----------
+function switchTab(t) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`v-${t}`).classList.add('active');
+  document.getElementById(`t-${t}`).classList.add('active');
+  if (t !== 'robot') speechSynthesis.cancel();
+}
 
-        // --- LÓGICA RECEPTOR ---
-        function switchTab(t) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`v-${t}`).classList.add('active');
-            document.getElementById(`t-${t}`).classList.add('active');
-            if(t === 'receptor') iniciarEscucha();
-            if(t === 'juego') initGame(); else gameActive = false;
-        }
+let datosGlobales = [];
+const getD = id => datosGlobales.find(d => d.id === id);
 
-        let datosGlobales = [];
+function iniciarEscucha() {
+  db.collection("entregas").orderBy("timestamp", "desc").onSnapshot(snap => {
+    datosGlobales = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderListado();
+  });
+}
+function renderListado() {
+  document.getElementById('listado-realtime').innerHTML = datosGlobales.map(d => {
+    const imgs = d.imagenes || [];
+    return `
+    <div class="folder ${d.pendiente ? 'pend' : ''}" data-nota="${esc(d.nota)}" data-cli="${esc(d.responsable)}">
+      <div class="folder-header">
+        <div>
+          <div class="folder-title">📦 NOTA: ${esc(d.nota)}</div>
+          <div class="folder-info">👤 CLIENTE: ${esc(d.responsable)}<br>📅 FECHA: ${esc(d.fecha)} | ⏰ HORA: ${esc(d.hora)}</div>
+        </div>
+        <button class="btn-del" onclick="eliminarRegistro('${d.id}')">ELIMINAR</button>
+      </div>
+      ${d.pendiente ? `<span class="badge b-p">⏳ MATERIAL PENDIENTE${d.pendienteDetalle ? ': ' + esc(d.pendienteDetalle) : ''}</span>` : (d.pendienteDetalle !== undefined && d.confirmado ? `<span class="badge b-ok">✓ MATERIAL COMPLETO</span>` : '')}
+      ${d.descripcion ? `<div class="obs">📝 ${esc(d.descripcion)}</div>` : ''}
+      <div class="grid-fotos">
+        ${imgs.map((img, i) => `
+          <div class="foto-item">
+            <img src="${img}" onclick="verImagen('${d.id}',${i})">
+            <button class="btn-dl-small" onclick="descargarImagen('${d.id}',${i})">DESCARGAR</button>
+          </div>`).join('')}
+      </div>
+      <div class="acts">
+        <button class="btn btn-s btn-share" onclick="compartir('${d.id}')">📤 Compartir</button>
+        <button class="btn btn-s btn-edit" onclick="abrirEdicion('${d.id}')">✏️ Editar</button>
+      </div>
+      ${d.pendiente ? `<button class="btn btn-s btn-ok" style="margin-top:8px" onclick="confirmarMaterial('${d.id}')">✅ Confirmar material completo</button>` : ''}
+      <button class="btn btn-zip" style="margin-top:8px" onclick="generarZip('${d.id}')">📥 Descargar carpeta completa (ZIP)</button>
+    </div>`;
+  }).join('');
+  filtrarCarpetas();
+}
+iniciarEscucha();
 
-        function iniciarEscucha() {
-            db.collection("entregas").orderBy("timestamp", "desc").onSnapshot(snap => {
-                datosGlobales = [];
-                const cont = document.getElementById('listado-realtime');
-                cont.innerHTML = "";
-                
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const id = doc.id;
-                    datosGlobales.push({id, ...d});
-                    
-                    const folderHTML = `
-                        <div class="folder" data-nota="${d.nota}">
-                            <div class="folder-header">
-                                <div>
-                                    <div class="folder-title">📦 NOTA: ${d.nota}</div>
-                                    <div class="folder-info">
-                                        👤 CLIENTE: ${d.responsable}<br>
-                                        📅 FECHA: ${d.fecha} | ⏰ HORA: ${d.hora}
-                                    </div>
-                                </div>
-                                <button class="btn-del" onclick="eliminarRegistro('${id}')">ELIMINAR</button>
-                            </div>
-                            
-                            <div class="grid-fotos">
-                                ${d.imagenes.map((img, index) => `
-                                    <div class="foto-item">
-                                        <img src="${img}" onclick="verImagen('${img}')">
-                                        <button class="btn-dl-small" onclick="descargarImagen('${img}', 'Nota_${d.nota}_F${index+1}.jpg')">DESCARGAR</button>
-                                    </div>
-                                `).join('')}
-                            </div>
-                            
-                            <button class="btn btn-zip" onclick="generarZip('${id}')">
-                                📥 DESCARGAR CARPETA COMPLETA (ZIP)
-                            </button>
-                        </div>
-                    `;
-                    cont.innerHTML += folderHTML;
-                });
-            });
-        }
+function verImagen(id, i) {
+  document.getElementById('img-full').src = getD(id).imagenes[i];
+  document.getElementById('modal-viewer').style.display = 'flex';
+}
+function descargarImagen(id, i) {
+  const d = getD(id), link = document.createElement('a');
+  link.href = d.imagenes[i]; link.download = `Nota_${d.nota}_F${i + 1}.jpg`; link.click();
+}
 
-        function verImagen(src) {
-            document.getElementById('img-full').src = src;
-            document.getElementById('modal-viewer').style.display = 'flex';
-        }
+function textoInfo(d) {
+  let t = `📦 NOTA: ${d.nota}\n👤 Cliente: ${d.responsable}\n📅 Fecha: ${d.fecha}\n⏰ Hora: ${d.hora}\n🖼️ Fotos: ${(d.imagenes || []).length}`;
+  if (d.descripcion) t += `\n📝 Observación: ${d.descripcion}`;
+  if (d.pendiente) t += `\n⏳ MATERIAL PENDIENTE${d.pendienteDetalle ? ': ' + d.pendienteDetalle : ''}`;
+  return t;
+}
+async function compartir(id) {
+  const d = getD(id), text = textoInfo(d);
+  try {
+    const files = await Promise.all((d.imagenes || []).map(async (img, i) =>
+      new File([await (await fetch(img)).blob()], `Nota_${d.nota}_F${i + 1}.jpg`, { type: 'image/jpeg' })));
+    if (navigator.canShare && navigator.canShare({ files })) return await navigator.share({ title: 'Nota ' + d.nota, text, files });
+    if (navigator.share) return await navigator.share({ title: 'Nota ' + d.nota, text });
+  } catch (e) { if (e.name === 'AbortError') return; }
+  window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+}
 
-        function descargarImagen(base64, name) {
-            const link = document.createElement('a');
-            link.href = base64;
-            link.download = name;
-            link.click();
-        }
+async function generarZip(id) {
+  const data = getD(id); if (!data) return;
+  const zip = new JSZip(), folder = zip.folder(`Expediente_Nota_${data.nota}`);
+  data.imagenes.forEach((img, i) => folder.file(`Foto_${i + 1}.jpg`, img.split(',')[1], { base64: true }));
+  folder.file("detalles.txt", `DETALLES DEL DESPACHO\n\nNota: ${data.nota}\nCliente: ${data.responsable}\nFecha: ${data.fecha}\nHora: ${data.hora}\nFotos totales: ${data.imagenes.length}` +
+    (data.descripcion ? `\nObservación: ${data.descripcion}` : '') + (data.pendiente ? `\nMATERIAL PENDIENTE: ${data.pendienteDetalle || 'Sí'}` : ''));
+  saveAs(await zip.generateAsync({ type: "blob" }), `ALP_Nota_${data.nota}.zip`);
+}
 
-        async function generarZip(id) {
-            const data = datosGlobales.find(d => d.id === id);
-            if(!data) return;
+async function confirmarMaterial(id) {
+  if (confirm("¿Confirmas que el material pendiente ya fue entregado?"))
+    await db.collection("entregas").doc(id).update({ pendiente: false, confirmado: true });
+}
+async function eliminarRegistro(id) {
+  if (confirm("¿Estás seguro de eliminar esta carpeta permanentemente?")) await db.collection("entregas").doc(id).delete();
+}
+async function eliminarTodo() {
+  if (confirm("⚠️ ADVERTENCIA: Se borrarán TODOS los datos del sistema. ¿Continuar?")) {
+    const snap = await db.collection("entregas").get(), batch = db.batch();
+    snap.forEach(doc => batch.delete(doc.ref));
+    await batch.commit(); alert("Base de datos limpiada.");
+  }
+}
+function filtrarCarpetas() {
+  const bus = document.getElementById('buscador').value.toLowerCase();
+  document.querySelectorAll('.folder').forEach(f => {
+    f.style.display = (f.dataset.nota + ' ' + f.dataset.cli).toLowerCase().includes(bus) ? 'block' : 'none';
+  });
+}
 
-            const zip = new JSZip();
-            const folder = zip.folder(`Expediente_Nota_${data.nota}`);
+// ---------- EDICIÓN ----------
+let editId = null, editFotos = [];
+function abrirEdicion(id) {
+  const d = getD(id); editId = id; editFotos = [...(d.imagenes || [])];
+  document.getElementById('e-nombre').value = d.responsable || '';
+  document.getElementById('e-nota').value = d.nota || '';
+  document.getElementById('e-desc').value = d.descripcion || '';
+  document.getElementById('e-pend').checked = !!d.pendiente;
+  document.getElementById('e-pend-det').value = d.pendienteDetalle || '';
+  pintarEdicion();
+  document.getElementById('modal-edit').style.display = 'flex';
+}
+function pintarEdicion() {
+  document.getElementById('e-count').innerText = editFotos.length;
+  document.getElementById('e-fotos').innerHTML = editFotos.map((img, i) =>
+    `<div class="foto-item"><img src="${img}"><button class="btn-x" onclick="editFotos.splice(${i},1);pintarEdicion()">×</button></div>`).join('');
+}
+function cerrarEdicion() { document.getElementById('modal-edit').style.display = 'none'; }
+function comprimir(file) {
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas'), k = Math.min(1, 720 / Math.max(img.width, img.height));
+      c.width = img.width * k; c.height = img.height * k;
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      res(c.toDataURL('image/jpeg', 0.6));
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+async function agregarFotosEdicion(inp) {
+  for (const f of inp.files) {
+    if (editFotos.length >= MAX_FOTOS) { alert("Máximo " + MAX_FOTOS + " fotos"); break; }
+    editFotos.push(await comprimir(f));
+  }
+  inp.value = ''; pintarEdicion();
+}
+async function guardarEdicion() {
+  const nom = document.getElementById('e-nombre').value.trim(), not = document.getElementById('e-nota').value.trim();
+  if (!nom || !not || editFotos.length === 0) return alert("Faltan datos o fotos");
+  if (tam(editFotos) > MAX_BYTES) return alert("Las fotos pesan demasiado. Quita alguna.");
+  const pend = document.getElementById('e-pend').checked, btn = document.getElementById('btn-guardar');
+  btn.disabled = true; btn.innerText = "Guardando...";
+  try {
+    await db.collection("entregas").doc(editId).update({
+      responsable: nom, nota: not, imagenes: editFotos,
+      descripcion: document.getElementById('e-desc').value.trim(),
+      pendiente: pend, pendienteDetalle: pend ? document.getElementById('e-pend-det').value.trim() : "",
+      confirmado: !pend && !!getD(editId).pendiente ? true : !!getD(editId).confirmado
+    });
+    cerrarEdicion();
+  } catch (e) { alert("Error al guardar"); }
+  btn.disabled = false; btn.innerText = "Guardar cambios";
+}
 
-            // Agregar Fotos
-            data.imagenes.forEach((img, i) => {
-                const imgData = img.split(',')[1];
-                folder.file(`Foto_${i+1}.jpg`, imgData, {base64: true});
-            });
-
-            // Agregar Info TXT
-            const texto = `DETALLES DEL DESPACHO\n\nNota: ${data.nota}\nCliente: ${data.responsable}\nFecha: ${data.fecha}\nHora: ${data.hora}\nFotos totales: ${data.imagenes.length}`;
-            folder.file("detalles.txt", texto);
-
-            const content = await zip.generateAsync({type:"blob"});
-            saveAs(content, `ALP_Nota_${data.nota}.zip`);
-        }
-
-        async function eliminarRegistro(id) {
-            if(confirm("¿Estás seguro de eliminar esta carpeta permanentemente?")) {
-                await db.collection("entregas").doc(id).delete();
-            }
-        }
-
-        async function eliminarTodo() {
-            if(confirm("⚠️ ADVERTENCIA: Se borrarán TODOS los datos del sistema. ¿Continuar?")) {
-                const snap = await db.collection("entregas").get();
-                const batch = db.batch();
-                snap.forEach(doc => batch.delete(doc.ref));
-                await batch.commit();
-                alert("Base de datos limpiada.");
-            }
-        }
-
-        function filtrarCarpetas() {
-            const bus = document.getElementById('buscador').value.toLowerCase();
-            const carpetas = document.querySelectorAll('.folder');
-            carpetas.forEach(f => {
-                f.style.display = f.getAttribute('data-nota').toLowerCase().includes(bus) ? 'block' : 'none';
-            });
-        }
-
-        // --- MOTOR DEL JUEGO PRO (Versión estable) ---
-        const gCanvas = document.getElementById('game-canvas');
-        const gCtx = gCanvas.getContext('2d');
-        let gameActive = false;
-        let score = 0;
-        let highScore = localStorage.getItem('alp_high') || 0;
-        let gameFrame = 0;
-        let speed = 5;
-
-        let player = { x: 50, y: 0, w: 40, h: 30, dy: 0, jump: -10, grounded: false };
-        let obstacles = [];
-
-        function initGame() {
-            gCanvas.width = gCanvas.offsetWidth;
-            gCanvas.height = gCanvas.offsetHeight;
-            player.y = gCanvas.height - 50;
-            document.getElementById('game-high').innerText = highScore;
-            if(!gameActive) {
-                gameActive = true;
-                score = 0; speed = 5; obstacles = [];
-                animate();
-            }
-        }
-
-        function animate() {
-            if(!gameActive) return;
-            gCtx.clearRect(0, 0, gCanvas.width, gCanvas.height);
-            gameFrame++;
-
-            player.dy += 0.6;
-            player.y += player.dy;
-            if(player.y > gCanvas.height - 50) {
-                player.y = gCanvas.height - 50;
-                player.dy = 0; player.grounded = true;
-            }
-
-            // Dibujar Suelo
-            gCtx.strokeStyle = "var(--accent)";
-            gCtx.beginPath(); gCtx.moveTo(0, gCanvas.height - 20); gCtx.lineTo(gCanvas.width, gCanvas.height - 20); gCtx.stroke();
-
-            // Obstáculos
-            if(gameFrame % 100 === 0) obstacles.push({ x: gCanvas.width, w: 30, h: 30 });
-            obstacles.forEach((obs, i) => {
-                obs.x -= speed;
-                gCtx.fillStyle = "#ffda44";
-                gCtx.fillRect(obs.x, gCanvas.height - 50, obs.w, obs.h);
-
-                if(player.x < obs.x + obs.w && player.x + player.w > obs.x && player.y + player.h > gCanvas.height - 50) {
-                    gameOver();
-                }
-            });
-
-            // Dibujar Jugador (Montacargas simple)
-            gCtx.fillStyle = "var(--accent)";
-            gCtx.fillRect(player.x, player.y, player.w, player.h);
-            gCtx.fillStyle = "black";
-            gCtx.fillRect(player.x + 30, player.y - 10, 5, 40);
-
-            score++; speed += 0.001;
-            document.getElementById('game-score').innerText = Math.floor(score/10);
-            requestAnimationFrame(animate);
-        }
-
-        function gameOver() {
-            gameActive = false;
-            if(Math.floor(score/10) > highScore) {
-                highScore = Math.floor(score/10);
-                localStorage.setItem('alp_high', highScore);
-            }
-            alert("GAME OVER - SCORE: " + Math.floor(score/10));
-            setTimeout(initGame, 500);
-        }
-
-        gCanvas.addEventListener('touchstart', e => { 
-            e.preventDefault(); 
-            if(player.grounded) { player.dy = player.jump; player.grounded = false; } 
-        });
-
-    </script>
+// ---------- ROBOT CEREBRO ----------
+const robotEl = document.getElementById('robot'), rout = document.getElementById('rout'), rstat = document.getElementById('rstat');
+function hablar(texto) {
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(texto); u.lang = 'es-ES'; u.rate = 1;
+  robotEl.classList.add('speaking'); rstat.innerText = "Hablando…";
+  u.onend = u.onerror = () => { robotEl.classList.remove('speaking'); rstat.innerText = "Cerebro ALP en espera"; };
+  speechSynthesis.speak(u);
+}
+function escucharRobot() {
+  if (!SR) return alert("Tu navegador no soporta reconocimiento de voz. Prueba con Chrome o Safari, o escribe abajo.");
+  speechSynthesis.cancel();
+  const r = new SR(); r.lang = 'es-ES'; r.interimResults = false;
+  robotEl.classList.add('listening'); rstat.innerText = "Escuchando…";
+  r.onresult = e => consultarRobot(e.results[0][0].transcript);
+  r.onend = () => { robotEl.classList.remove('listening'); if (rstat.innerText === "Escuchando…") rstat.innerText = "Cerebro ALP en espera"; };
+  r.onerror = () => robotEl.classList.remove('listening');
+  r.start();
+}
+function consultarRobot(q) {
+  q = (q || '').toLowerCase().trim(); if (!q) return;
+  const nums = q.match(/\d+/g) || [];
+  let res = datosGlobales.filter(d => nums.includes(String(d.nota).trim()));
+  if (!res.length) {
+    const words = q.split(/\s+/).filter(w => w.length > 2 && !['nota', 'cliente', 'entrega', 'numero', 'número', 'del', 'de', 'la', 'el'].includes(w));
+    res = datosGlobales.filter(d => {
+      const n = String(d.responsable).toLowerCase();
+      return q.includes(n) || words.some(w => n.includes(w));
+    });
+  }
+  if (!res.length) {
+    const m = `No encontré ninguna entrega con "${q}".`;
+    rout.innerText = m; return hablar(m);
+  }
+  const d = res[0];
+  let voz = `Nota ${d.nota}. Cliente: ${d.responsable}. Fecha: ${d.fecha}. Hora: ${d.hora}. Tiene ${(d.imagenes || []).length} fotos.`;
+  voz += d.descripcion ? ` Observación: ${d.descripcion}.` : ` Sin observaciones.`;
+  if (d.pendiente) voz += ` Atención, hay material pendiente${d.pendienteDetalle ? ': ' + d.pendienteDetalle : ''}.`;
+  if (res.length > 1) voz += ` Encontré ${res.length} resultados, te leí el más reciente.`;
+  rout.innerText = textoInfo(d) + (res.length > 1 ? `\n\n(${res.length} resultados, mostrando el más reciente)` : '');
+  hablar(voz);
+}
+</script>
 </body>
 </html>
