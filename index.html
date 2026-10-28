@@ -89,12 +89,31 @@ input:focus,textarea:focus{border-color:var(--accent)}
 @keyframes pulse{50%{opacity:.45}}@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
 @keyframes zap{0%,100%{opacity:0}10%,30%{opacity:1}50%{opacity:.1}}@keyframes bar{to{height:16px}}
 .footer-tag{text-align:center;font-size:.6rem;color:rgba(255,255,255,.25);padding:10px 0 0}
+select{width:100%;padding:13px;border-radius:12px;border:1px solid var(--border);background:rgba(0,0,0,.45);color:#fff;margin-bottom:10px;outline:none;font-size:.9rem}
+.menu-btn{border:1px solid var(--border);background:rgba(0,242,255,.1);color:var(--accent);border-radius:12px;width:40px;height:40px;font-size:1.2rem;cursor:pointer;flex-shrink:0}
+#drawer{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:900}
+.dr-box{width:78%;max-width:320px;height:100%;background:#0b1220;border-right:1px solid var(--border);padding:22px 16px;display:flex;flex-direction:column;gap:8px}
+.dr-box h2{font-size:1.1rem;margin-bottom:8px;color:var(--accent)}
+.dr-item{text-align:left;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#fff;font-size:.9rem;font-weight:600;cursor:pointer}
+.vid{margin-bottom:16px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:20px;padding:12px}
+.vid .vt{font-size:.85rem;font-weight:700;color:var(--accent);margin-bottom:8px}
+.vid video{width:100%;border-radius:14px;background:#000}
 .hidden{display:none}
 </style>
 </head>
 <body>
 <canvas id="fx"></canvas>
 <div id="modal-viewer" onclick="this.style.display='none'"><img id="img-full" src=""></div>
+
+<div id="drawer" onclick="cerrarMenu()"><div class="dr-box" onclick="event.stopPropagation()">
+  <h2>☰ Menú</h2>
+  <button class="dr-item" onclick="abrirGuia()">📖 Instructivo</button>
+  <button class="dr-item" onclick="irA('relax')">🌿 Relajarse (videos)</button>
+  <button class="dr-item" onclick="irA('emisor')">📷 Emisor</button>
+  <button class="dr-item" onclick="irA('receptor')">📦 Receptor</button>
+  <button class="dr-item" onclick="irA('robot')">🤖 Cerebro</button>
+  <button class="dr-item" onclick="alternarMusica()">🎵 Música: activar / silenciar</button>
+</div></div>
 
 <div id="modal-help"><div class="edit-box guia">
   <h2>📖 Instructivo de SISTEMA ALP</h2>
@@ -126,9 +145,25 @@ input:focus,textarea:focus{border-color:var(--accent)}
   <h3>🤖 CEREBRO — el asistente de voz</h3>
   <ul>
     <li>Al entrar te saluda y pregunta quién eres. Di tu nombre y responde cómo te sientes.</li>
-    <li><b>Di o escribe un número de nota</b> (de cualquier forma: "1234", "uno dos tres cuatro", "mil doscientos treinta y cuatro") o un nombre de cliente: te lee fecha, hora, observación, pendientes y analiza las fotos.</li>
-    <li><b>Pregunta por IADIEXPORT</b> (productos, transformadores, postes, luminarias, contacto, cotización): el cerebro investiga en la página de la empresa y te da opciones mientras busca.</li>
-    <li><b>Clave de IA (Gemini):</b> pégala al final y toca 💾 para que describa las fotos y converse. Se guarda solo en tu dispositivo.</li>
+    <li><b>Selector de notas:</b> arriba aparece una lista con TODAS las notas registradas. Elige una y el cerebro te lee fecha, hora, observación, pendientes y analiza las fotos.</li>
+    <li><b>Por voz o escrito:</b> también puedes decir un número de nota (de cualquier forma: "1234", "uno dos tres cuatro", "mil doscientos treinta y cuatro") o un nombre de cliente.</li>
+    <li><b>IADIEXPORT:</b> toca una opción (Todos los productos, Transformadores, Postes, Luminarias, Protecciones, Herrajes, Otros productos, Objetivo y valores, Contacto, Cotización) y el cerebro describe y lee la información de la empresa. También puedes preguntarle por voz.</li>
+    <li><b>Clave de IA (Gemini):</b> pégala al final y toca 💾 para que describa las fotos, converse y investigue en la página de la empresa. Se guarda solo en tu dispositivo.</li>
+  </ul>
+
+  <h3>☰ MENÚ</h3>
+  <ul>
+    <li>El botón <b>☰</b> (arriba a la izquierda) abre el menú: Instructivo, Relajarse, las secciones de la web y el control de la música.</li>
+  </ul>
+
+  <h3>🌿 RELAX — zona de relajación</h3>
+  <ul>
+    <li>Aquí están los videos para ver y descansar un momento. Toca ▶ en el que quieras. Al reproducir un video la música se pausa y vuelve al terminar.</li>
+  </ul>
+
+  <h3>🎵 MÚSICA</h3>
+  <ul>
+    <li>Al abrir la página suena una música de fondo. Con el botón <b>🔊 / 🔇</b> de arriba a la derecha la quitas o la pones. Si tu teléfono no la deja sonar sola, toca cualquier parte de la pantalla.</li>
   </ul>
   <button class="btn btn-send" onclick="document.getElementById('modal-help').style.display='none'">Entendido</button>
 </div></div>
@@ -152,13 +187,14 @@ input:focus,textarea:focus{border-color:var(--accent)}
 
 <div class="app-card">
   <div class="header">
-    <div style="display:flex;align-items:center;gap:10px"><h1>Despacho <span>ALP</span></h1><button class="help-btn" onclick="abrirGuia()">📖 Instructivo</button></div>
-    <div style="font-size:.65rem;text-align:right;color:var(--t2)">2026<br><span id="status" style="color:var(--success)">● Conectado</span></div>
+    <div style="display:flex;align-items:center;gap:10px"><button class="menu-btn" onclick="abrirMenu()" aria-label="Menú">☰</button><h1>Despacho <span>ALP</span></h1></div>
+    <div style="display:flex;align-items:center;gap:10px"><button id="btn-musica" class="help-btn" onclick="alternarMusica()">🔊</button><div style="font-size:.65rem;text-align:right;color:var(--t2)">2026<br><span id="status" style="color:var(--success)">● Conectado</span></div></div>
   </div>
   <div class="tabs">
     <button id="t-emisor" class="tab-btn active" onclick="switchTab('emisor')">Emisor</button>
     <button id="t-receptor" class="tab-btn" onclick="switchTab('receptor')">Receptor</button>
     <button id="t-robot" class="tab-btn" onclick="switchTab('robot')">🤖 Cerebro</button>
+    <button id="t-relax" class="tab-btn" onclick="switchTab('relax')">🌿 Relax</button>
   </div>
 
   <!-- EMISOR -->
@@ -197,6 +233,7 @@ input:focus,textarea:focus{border-color:var(--accent)}
         </div>
       </div>
       <div class="rstat" id="rstat">Cerebro ALP en espera</div>
+      <select id="selNotas" onchange="elegirNota(this.value)"><option value="">📋 Selecciona una nota</option></select>
       <div class="rout" id="rout">Toca el micrófono y di un número de entrega, un nombre de cliente o pregunta por IADIEXPORT.</div>
       <div class="chips" id="ropc"></div>
       <button class="btn btn-cap" id="btn-escuchar" onclick="escucharRobot()">🎤 Hablar con el cerebro</button>
@@ -206,7 +243,13 @@ input:focus,textarea:focus{border-color:var(--accent)}
     </div>
   </div>
 
-  <div class="footer-tag">SISTEMA INTEGRAL ALP © 2026 - ROBERT/ELY/HIMMER/PEDRO/HERNÁN</div>
+  <!-- RELAX -->
+  <div id="v-relax" class="view">
+    <div class="lbl">🌿 Zona de relajación</div>
+    <div id="lista-videos"></div>
+  </div>
+
+  <div class="footer-tag">SISTEMA DESPACHO ALP © 2026 - ROBERT/ELY/HIMMER/PEDRO/HERNÁN</div>
 </div>
 
 <script>
@@ -220,7 +263,48 @@ const db = firebase.firestore();
 const MAX_FOTOS = 10, MAX_BYTES = 950000;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tam = arr => arr.reduce((a, b) => a + b.length, 0);
-function abrirGuia() { document.getElementById('modal-help').style.display = 'flex'; }
+function abrirMenu() { document.getElementById('drawer').style.display = 'block'; }
+function cerrarMenu() { document.getElementById('drawer').style.display = 'none'; }
+function irA(t) { cerrarMenu(); switchTab(t); }
+function abrirGuia() { cerrarMenu(); document.getElementById('modal-help').style.display = 'flex'; }
+
+// ---------- CONFIGURACIÓN: MÚSICA Y VIDEOS (archivos en tu GitHub, misma carpeta que index.html) ----------
+const MUSICA = 'musica.mp3';
+const VIDEOS = [
+   { t: 'video 1', u: 'video1.mp4' },
+   { t: 'video 2', u: 'video2.mp4' },
+];
+const audio = new Audio(MUSICA); audio.loop = true; audio.volume = .35;
+let silenciado = localStorage.getItem('alp_mute') === '1', videoSonando = false;
+const pintaMusica = () => { document.getElementById('btn-musica').innerText = silenciado ? '🔇' : '🔊'; };
+function alternarMusica() {
+  silenciado = !silenciado; localStorage.setItem('alp_mute', silenciado ? '1' : '0');
+  if (silenciado) audio.pause(); else if (!videoSonando) audio.play().catch(() => {});
+  pintaMusica();
+}
+audio.addEventListener('error', () => { document.getElementById('btn-musica').style.display = 'none'; });
+pintaMusica();
+if (!silenciado) audio.play().catch(() => {});
+['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, () => { if (!silenciado && !videoSonando && audio.paused) audio.play().catch(() => {}); }, { passive: true }));
+function videoOn() { videoSonando = true; audio.pause(); }
+function videoOff() { videoSonando = false; if (!silenciado) audio.play().catch(() => {}); }
+document.getElementById('lista-videos').innerHTML = VIDEOS.length ? VIDEOS.map(v =>
+  `<div class="vid"><div class="vt">🎬 ${esc(v.t)}</div><video src="${esc(v.u)}" controls playsinline preload="metadata" onplay="videoOn()" onpause="videoOff()" onended="videoOff()"></video></div>`).join('')
+  : '<div class="obs">Aún no hay videos cargados. Muy pronto aparecerán aquí.</div>';
+
+// ---------- SELECTOR DE NOTAS ----------
+function poblarSelector() {
+  const s = document.getElementById('selNotas'); if (!s) return; const v = s.value;
+  s.innerHTML = `<option value="">📋 Selecciona una nota (${datosGlobales.length} registradas)</option>` +
+    datosGlobales.map(d => `<option value="${esc(d.id)}">Nota ${esc(d.nota)} — ${esc(d.responsable)}</option>`).join('');
+  s.value = v;
+}
+function elegirNota(id) {
+  const d = getD(id); if (!d) return;
+  speechSynthesis.cancel(); etapa = 'listo'; opciones([]);
+  rout.innerText = '🗣️ Nota ' + d.nota; reportar([d]);
+}
+function iadi(o) { speechSynthesis.cancel(); etapa = 'listo'; rout.innerText = '🗣️ ' + o; consultarIadi(o, true); }
 
 // ---------- FONDO: RAYOS ----------
 const fx = document.getElementById('fx'), cx = fx.getContext('2d');
@@ -309,6 +393,8 @@ function switchTab(t) {
   document.getElementById(`v-${t}`).classList.add('active');
   document.getElementById(`t-${t}`).classList.add('active');
   if (t !== 'robot') speechSynthesis.cancel(); else iniciarCerebro();
+  audio.volume = t === 'robot' ? .12 : .35;
+  if (t !== 'relax') document.querySelectorAll('#lista-videos video').forEach(v => v.pause());
 }
 
 let datosGlobales = [];
@@ -349,7 +435,7 @@ function renderListado() {
       <button class="btn btn-zip" style="margin-top:8px" onclick="generarZip('${d.id}')">📥 Descargar carpeta completa (ZIP)</button>
     </div>`;
   }).join('');
-  filtrarCarpetas();
+  filtrarCarpetas(); poblarSelector();
 }
 iniciarEscucha();
 
@@ -599,39 +685,46 @@ function extraerNumeros(q) {
 }
 const sinCeros = s => String(s).trim().replace(/^0+(?=\d)/, '');
 
-function buscar(q) {
+function buscarNum(q) {
   const nums = extraerNumeros(q).map(sinCeros);
-  let res = datosGlobales.filter(d => {
+  return datosGlobales.filter(d => {
     const n = sinCeros(d.nota), soloDig = sinCeros(String(d.nota).replace(/\D/g, ''));
     return nums.includes(n) || (soloDig && nums.includes(soloDig));
   });
-  if (!res.length) {
-    const qn = norm(q);
-    const words = qn.split(/\s+/).filter(w => w.length > 2 && !['nota', 'cliente', 'entrega', 'numero', 'del', 'de', 'la', 'el', 'las', 'los', 'una', 'uno', 'dos', 'tres'].includes(w) && !(w in NUM));
-    res = datosGlobales.filter(d => { const n = norm(String(d.responsable)); return qn.includes(n) || words.some(w => n.includes(w)); });
-  }
-  return res;
+}
+function buscarCliente(q) {
+  const qn = norm(q);
+  const words = qn.split(/\s+/).filter(w => w.length > 2 && !['nota', 'cliente', 'entrega', 'numero', 'del', 'de', 'la', 'el', 'las', 'los', 'una', 'uno', 'dos', 'tres'].includes(w) && !(w in NUM));
+  return datosGlobales.filter(d => { const n = norm(String(d.responsable)); return qn.includes(n) || words.some(w => n.includes(w)); });
 }
 
 // ---------- IADIEXPORT ----------
 const IADI_URL = 'https://www.iadiexport.com';
-const IADI_BASE = 'IADIEXPORT (Corporación Iadiexport C.A) diseña, fabrica, distribuye y comercializa equipos y materiales para sistemas eléctricos de alta, media y baja tensión. Aliado en proyectos con atención personalizada. Valores: respeto, compromiso, responsabilidad, confianza y calor humano. Categorías: Transformadores (tecnología desarrollada en casa, estándares nacionales e internacionales), Postes (fabricados bajo normas COVENIN), Luminarias (fabricantes y distribuidores exclusivos de la marca WEMCA, para calles, avenidas, industrias y espacios recreativos), Protecciones eléctricas (cortacorrientes, seccionadores y pararrayos), Herrajes galvanizados (abrazaderas, tornillos, pernos, crucetas, conectores) y Otros productos (cables, brazos para iluminación, grupos electrógenos o plantas eléctricas). Oficina comercial: Av. Francisco de Miranda, Centro Lido, Chacao, Caracas, Venezuela. Teléfonos +58 212 953.6230 / 953.1848. Instagram @iadiexport. Los precios se solicitan en la sección Solicitar cotización de la web.';
+const T_TRANS = 'Transformadores: nuestros transformadores eléctricos están diseñados con tecnología desarrollada en casa, considerando estándares nacionales e internacionales y los requerimientos del cliente.';
+const T_POSTES = 'Postes: la fabricación de postes y estructuras se apega a los requisitos de las normas COVENIN, garantizando calidad y durabilidad.';
+const T_LUM = 'Luminarias: somos fabricantes y distribuidores exclusivos de luminarias marca WEMCA, diseñadas para iluminar espacios comunes y recreativos, calles, avenidas e industrias.';
+const T_PROT = 'Protecciones eléctricas: son fundamentales en los sistemas de distribución. Ofrecemos cortacorrientes, seccionadores y pararrayos de altísima calidad.';
+const T_HERR = 'Herrajes: diseñamos y fabricamos un amplio surtido de herrajes galvanizados para proyectos de larga duración, como abrazaderas, tornillos, pernos, crucetas y conectores.';
+const T_OTROS = 'Otros productos: una gran variedad de productos de altísima calidad para complementar proyectos, como cables, brazos para iluminación, grupos electrógenos o plantas eléctricas y más.';
+const T_OBJ = 'IADIEXPORT se especializa en diseñar, fabricar, distribuir y comercializar equipos y materiales para sistemas eléctricos de alta, media y baja tensión. Es el aliado de quienes construyen país, con atención personalizada para impulsar sus proyectos. Su propósito es alcanzar el éxito juntos: comprender las necesidades de cada cliente para brindar un servicio de calidad con soluciones eficaces, acompañándolo desde el primer contacto. Sus valores son: respeto hacia nuestra gente, compromiso con nuestros clientes, responsabilidad en los procesos y confianza en la calidad de nuestros productos. Pero, sobre todo, lo que más los caracteriza es el calor humano.';
 const TEMAS = [
-  { r: /transformador/, p: '/product-category/transformadores/', t: 'Transformadores: eléctricos, con tecnología desarrollada en casa, según estándares nacionales e internacionales y los requerimientos del cliente.' },
-  { r: /poste/, p: '/product-category/postes/', t: 'Postes y estructuras: fabricados bajo las normas COVENIN, con calidad y durabilidad.' },
-  { r: /luminaria|wemca|alumbrado|iluminacion/, p: '/product-category/luminarias/', t: 'Luminarias: somos fabricantes y distribuidores exclusivos de la marca WEMCA, para calles, avenidas, industrias y espacios comunes y recreativos.' },
-  { r: /proteccion|cortacorriente|seccionador|pararrayo/, p: '/product-category/protecciones-electricas/', t: 'Protecciones eléctricas: cortacorrientes, seccionadores y pararrayos de alta calidad para sistemas de distribución.' },
-  { r: /herraje|abrazadera|perno|tornillo|cruceta|conector/, p: '/product-category/herrajes/', t: 'Herrajes galvanizados de larga duración: abrazaderas, tornillos, pernos, crucetas, conectores y más.' },
-  { r: /cable|electrogeno|planta|brazo|otros|producto/, p: '/productos/', t: 'Otros productos: cables, brazos para iluminación, grupos electrógenos (plantas eléctricas) y más.' },
-  { r: /contact|telefono|direccion|donde|ubic|correo|llamar/, p: '/contactenos/', t: 'Oficina comercial: Av. Francisco de Miranda, Centro Lido, Chacao, Caracas. Teléfonos +58 212 953.6230 y 953.1848. Instagram: iadiexport.' },
-  { r: /cotiz|precio|costo|valor|cuanto/, p: '/solicitar-cotizacion/', t: 'Los precios se manejan por cotización: se solicitan en la sección Solicitar cotización de la página o llamando a la oficina comercial.' },
-  { r: /quienes|somos|historia|valores|mision/, p: '/somos/', t: 'IADIEXPORT diseña, fabrica y distribuye equipos y materiales para el sector eléctrico. Sus valores: respeto, compromiso, responsabilidad, confianza y calor humano.' }
+  { r: /transformador/, p: '/product-category/transformadores/', t: T_TRANS },
+  { r: /poste/, p: '/product-category/postes/', t: T_POSTES },
+  { r: /luminaria|wemca|alumbrado|iluminacion/, p: '/product-category/luminarias/', t: T_LUM },
+  { r: /proteccion|cortacorriente|seccionador|pararrayo/, p: '/product-category/protecciones-electricas/', t: T_PROT },
+  { r: /herraje|abrazadera|perno|tornillo|cruceta|conector/, p: '/product-category/herrajes/', t: T_HERR },
+  { r: /otros|cable|electrogeno|planta|brazo/, p: '/productos/', t: T_OTROS },
+  { r: /todos|catalogo|productos|que venden|fabrican/, p: '/productos/', t: 'Estos son los productos de IADIEXPORT. ' + [T_TRANS, T_POSTES, T_LUM, T_PROT, T_HERR, T_OTROS].join(' ') },
+  { r: /contact|telefono|direccion|donde|ubic|correo|llamar/, p: '/contactenos/', t: 'Oficina comercial: Av. Francisco de Miranda, Centro Lido, Chacao, Caracas, Venezuela. Teléfonos +58 212 953.6230 y 953.1848. Instagram: iadiexport.' },
+  { r: /cotiz|precio|costo|cuanto/, p: '/solicitar-cotizacion/', t: 'Los precios se manejan por cotización: se solicitan en la sección Solicitar cotización de la página o llamando a la oficina comercial.' },
+  { r: /objetivo|valores|quienes|somos|historia|mision|proposito|empresa|iadi/, p: '/somos/', t: T_OBJ }
 ];
-const OPC_IADI = ['Transformadores', 'Postes', 'Luminarias', 'Protecciones', 'Herrajes', 'Otros productos', 'Contacto', 'Cotización'];
-const reIadi = /iadi|iadiexport|nuestra empresa|la empresa|transformador|poste|luminaria|wemca|proteccion|cortacorriente|seccionador|pararrayo|herraje|electrogeno|cotizacion/;
+const IADI_BASE = 'IADIEXPORT (Corporación Iadiexport C.A). ' + T_OBJ + ' ' + [T_TRANS, T_POSTES, T_LUM, T_PROT, T_HERR, T_OTROS].join(' ') + ' Oficina comercial: Av. Francisco de Miranda, Centro Lido, Chacao, Caracas. Teléfonos +58 212 953.6230 / 953.1848. Los precios se solicitan por cotización.';
+const OPC_IADI = ['Todos los productos', 'Transformadores', 'Postes', 'Luminarias', 'Protecciones', 'Herrajes', 'Otros productos', 'Objetivo y valores', 'Contacto', 'Cotización'];
+const reIadi = /iadi|nuestra empresa|la empresa|transformador|poste|luminaria|wemca|proteccion|cortacorriente|seccionador|pararrayo|herraje|electrogeno|cotizacion|productos|objetivo|valores|catalogo/;
 const cachePag = {};
 function opciones(lista) {
-  ropc.innerHTML = (lista || []).map(o => `<button class="chip" onclick="consultarRobot('IADIEXPORT ${o}')">${o}</button>`).join('');
+  ropc.innerHTML = (lista || []).map(o => `<button class="chip" onclick="iadi('${o}')">${o}</button>`).join('');
 }
 async function bajarPagina(path) {
   if (cachePag[path] !== undefined) return cachePag[path];
@@ -650,24 +743,21 @@ async function bajarPagina(path) {
   }
   return (cachePag[path] = '');
 }
-async function consultarIadi(q) {
-  const n = norm(q), tema = TEMAS.find(t => t.r.test(n));
+async function consultarIadi(q, directo) {
+  const n = norm(q), tema = TEMAS.find(t => t.r.test(n)) || TEMAS[TEMAS.length - 1];
   opciones(OPC_IADI);
-  const aviso = 'Voy a la página de IADIEXPORT a investigar. Mientras tanto, elige una opción: transformadores, postes, luminarias, protecciones, herrajes, otros productos, contacto o cotización.';
-  rout.innerText = '🔎 ' + aviso; rstat.innerText = "Investigando…";
-  if (!tema || !localStorage.getItem('alp_key')) hablar(tema ? 'Investigando en la página de IADIEXPORT.' : aviso);
-  const paginas = await Promise.all([bajarPagina(tema ? tema.p : '/productos/'), bajarPagina('/')]);
+  const key = !!localStorage.getItem('alp_key');
+  if (directo || !key) {
+    rout.innerText = '🏢 IADIEXPORT\n\n' + tema.t + '\n\n🌐 ' + IADI_URL + tema.p;
+    return hablar(tema.t, auto);
+  }
+  rout.innerText = '🔎 Investigando en la página de IADIEXPORT… Mientras tanto, elige una opción abajo.'; rstat.innerText = "Investigando…";
+  hablar('Investigando en la página de IADIEXPORT. Mientras tanto puedes elegir una opción.');
+  const paginas = await Promise.all([bajarPagina(tema.p), bajarPagina('/')]);
   const web = paginas.filter(Boolean).join(' ');
-  let resp = null;
-  if (localStorage.getItem('alp_key')) {
-    resp = await ia('Eres el cerebro ALP y respondes sobre la empresa IADIEXPORT usando solo la información dada. Responde en español, sin markdown, máximo 3 frases claras. Si no hay precios en la información, di que se piden por cotización.', [{ role: 'user', content: `Pregunta: ${q}\n\nInformación base: ${IADI_BASE}\n\nContenido de la web: ${web}` }], 220);
-  }
-  if (!resp) {
-    resp = tema ? tema.t : IADI_BASE.split('. ').slice(0, 3).join('. ') + '.';
-    const precios = (web.match(/[^|]*(\$|usd|bs\.?)\s?\d[^|]*/gi) || []).slice(0, 3).map(s => s.trim()).join('. ');
-    if (precios) resp += ' Valores encontrados en la web: ' + precios + '.';
-  }
-  rout.innerText = '🏢 IADIEXPORT\n\n' + resp + '\n\n🌐 ' + IADI_URL + (tema ? tema.p : '');
+  let resp = await ia('Eres el cerebro ALP y respondes sobre la empresa IADIEXPORT usando solo la información dada. Responde en español, sin markdown, máximo 4 frases claras. Si no hay precios en la información, di que se piden por cotización.', [{ role: 'user', content: `Pregunta: ${q}\n\nInformación base: ${IADI_BASE}\n\nContenido de la web: ${web}` }], 300);
+  if (!resp) resp = tema.t;
+  rout.innerText = '🏢 IADIEXPORT\n\n' + resp + '\n\n🌐 ' + IADI_URL + tema.p;
   hablar(resp, auto);
 }
 
@@ -684,7 +774,7 @@ function escucharRobot() {
   robotEl.classList.add('listening'); rstat.innerText = "Escuchando…";
   r.onresult = e => {
     const alts = [...e.results[0]].map(a => a.transcript);
-    const mejor = alts.find(a => extraerNumeros(a).length && buscar(a).length) || alts[0];
+    const mejor = alts.find(a => buscarNum(a).length) || alts[0];
     manejar(mejor);
   };
   r.onend = () => { robotEl.classList.remove('listening'); if (rstat.innerText === "Escuchando…") rstat.innerText = "Cerebro ALP en espera"; };
@@ -697,8 +787,9 @@ async function manejar(q) {
   q = (q || '').trim(); if (!q) return;
   speechSynthesis.cancel();
   rout.innerText = '🗣️ ' + q;
-  // Si dice un número de nota existente, se pone a trabajar de inmediato
-  if (etapa !== 'listo' && extraerNumeros(q).length && buscar(q).length) etapa = 'listo';
+  // Si dice una nota existente o pregunta por IADIEXPORT, se pone a trabajar de inmediato
+  const resN = buscarNum(q), esIadi = reIadi.test(norm(q));
+  if (etapa !== 'listo' && (resN.length || esIadi)) etapa = 'listo';
   if (etapa === 'inicio' || etapa === 'quien') {
     const p = identificar(q);
     if (!p) { const m = "No te reconocí. Dime tu nombre: Hernán, Mary, Elly, Robert o Pedro."; rout.innerText = m; return hablar(m, auto); }
@@ -708,18 +799,19 @@ async function manejar(q) {
   }
   if (etapa === 'sentir') {
     etapa = 'listo';
-    const m0 = "Me alegra escucharte. Dime un número de nota, un nombre de cliente o pregunta por IADIEXPORT.";
-    opciones(['IADIEXPORT']);
+    const m0 = "Me alegra escucharte. Elige una nota en la lista, dime un número de nota o un cliente, o toca una opción de IADIEXPORT.";
+    opciones(OPC_IADI);
     rout.innerText = m0; hablar(m0, auto);
-    charla(q); // sigue el historial sin hacer esperar
+    charla(q);
     return;
   }
-  const res = buscar(q);
-  if (res.length) { opciones([]); return reportar(res); }
-  if (reIadi.test(norm(q))) return consultarIadi(q);
+  if (resN.length) { opciones([]); return reportar(resN); }
+  if (esIadi) return consultarIadi(q, false);
+  const resC = buscarCliente(q);
+  if (resC.length) { opciones([]); return reportar(resC); }
   const nums = extraerNumeros(q);
   if (nums.length) {
-    const m = `No encontré la nota ${nums.slice(0, 3).join(' ni ')}. Repítela o escríbela abajo.`;
+    const m = `No encontré la nota ${nums.slice(0, 3).join(' ni ')}. Elígela en la lista o repítela.`;
     rout.innerText = m; return hablar(m, auto);
   }
   rout.innerText = '💬 …';
