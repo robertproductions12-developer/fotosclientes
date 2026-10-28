@@ -203,7 +203,7 @@
     <div id="metro-cal"><b>Calibrar</b><div style="font-size:.78rem;color:rgba(255,255,255,.7)">Apoya una tarjeta de banco o cédula (85,6 mm de ancho) sobre el recuadro y ajusta hasta que coincidan.</div>
       <div class="card" id="m-card"></div><input type="range" id="m-rng" min="2" max="9" step="0.005"><div id="m-val" style="font-size:.75rem;margin-bottom:8px"></div>
       <button class="btn btn-send" id="m-ok" style="margin:0">Guardar calibración</button></div>
-    <div id="metro-bar"><button id="m-x">✕ Cerrar</button><button id="m-mod">Modo: desde 0</button><button id="m-cal">🎯 Calibrar</button></div>`;
+    <div id="metro-bar"><button id="m-x">✕ Cerrar</button><button id="m-mov" style="flex:2;background:rgba(48,209,88,.2);color:#30d158;border-color:#30d158">📱 Mantén y avanza</button><button id="m-mod">Modo: desde 0</button><button id="m-cal">🎯 Calibrar</button></div>`;
   document.body.appendChild(ov);
   const cv = $('m-cv'), g = cv.getContext('2d');
   function layout() {
@@ -230,8 +230,9 @@
       if (i % 16 === 0) { g.font = '700 13px sans-serif'; g.fillText(String(i / 16), x, H - 36); }
     }
     g.textAlign = 'left'; g.font = '600 11px sans-serif'; g.fillText('in', 4, H - 36);
-    if (ini !== null && fin !== null) {
-      const a = Math.min(ini, fin), b = Math.max(ini, fin), y = H / 2, mm = (b - a) / pxmm;
+    if (movMM !== null || (ini !== null && fin !== null)) {
+      let a, b; if (movMM !== null) { a = ORG; b = Math.min(W - 4, ORG + movMM * pxmm); } else { a = Math.min(ini, fin); b = Math.max(ini, fin); }
+      const y = H / 2, mm = movMM !== null ? movMM : (b - a) / pxmm;
       g.strokeStyle = '#d70015'; g.fillStyle = '#d70015'; g.lineWidth = 3;
       g.beginPath(); g.moveTo(a, y); g.lineTo(b, y); g.stroke();
       g.lineWidth = 3; [a, b].forEach(x => { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); });
@@ -245,7 +246,7 @@
     }
   }
   const lx = e => (innerHeight > innerWidth ? e.clientY : e.clientX);
-  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); midiendo = true; const x = lx(e); ini = modo === 'cero' ? ORG : x; fin = x; dibuja(); });
+  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); midiendo = true; movMM = null; const x = lx(e); ini = modo === 'cero' ? ORG : x; fin = x; dibuja(); });
   cv.addEventListener('pointermove', e => { if (midiendo) { fin = Math.max(ORG, lx(e)); dibuja(); } });
   ['pointerup', 'pointercancel'].forEach(t => cv.addEventListener(t, () => { midiendo = false; }));
   $('m-mod').onclick = () => { modo = modo === 'cero' ? 'puntos' : 'cero'; $('m-mod').textContent = modo === 'cero' ? 'Modo: desde 0' : 'Modo: entre 2 puntos'; ini = fin = null; dibuja(); };
@@ -253,8 +254,36 @@
   $('m-cal').onclick = () => { $('m-rng').value = pxmm; pintaCal(); $('metro-cal').style.display = 'block'; };
   $('m-rng').oninput = e => { pxmm = parseFloat(e.target.value); pintaCal(); dibuja(); };
   $('m-ok').onclick = () => { localStorage.setItem('alp_pxmm', pxmm); $('metro-cal').style.display = 'none'; dibuja(); };
+  // ----- MEDIR MOVIENDO EL TELÉFONO (acelerómetro) -----
+  let movMM = null, movOn = false, mv = {};
+  const mvReset = () => { mv = { vx: 0, vy: 0, vz: 0, px: 0, py: 0, pz: 0, t: 0, n: 0, bx: 0, by: 0, bz: 0, quiet: 0, gx: 0, gy: 0, gz: 0 }; };
+  function onMotion(e) {
+    if (!movOn) return;
+    let ax, ay, az; const a = e.acceleration;
+    if (a && a.x !== null) { ax = a.x; ay = a.y; az = a.z; }
+    else { const ag = e.accelerationIncludingGravity; if (!ag || ag.x === null) return; const k = .9; mv.gx = k * mv.gx + (1 - k) * ag.x; mv.gy = k * mv.gy + (1 - k) * ag.y; mv.gz = k * mv.gz + (1 - k) * ag.z; ax = ag.x - mv.gx; ay = ag.y - mv.gy; az = ag.z - mv.gz; }
+    const dt = mv.t ? Math.min((e.timeStamp - mv.t) / 1000, .05) : 0; mv.t = e.timeStamp; if (!dt) return;
+    mv.n++;
+    if (mv.n <= 20) { mv.bx += ax / 20; mv.by += ay / 20; mv.bz += az / 20; if (mv.n === 20) { $('m-mov').textContent = '¡AVANZA!'; try { navigator.vibrate(40); } catch (x) {} } return; }
+    ax -= mv.bx; ay -= mv.by; az -= mv.bz;
+    if (Math.hypot(ax, ay, az) < .12) { ax = ay = az = 0; if (++mv.quiet > 8) mv.vx = mv.vy = mv.vz = 0; } else mv.quiet = 0;
+    mv.vx += ax * dt; mv.vy += ay * dt; mv.vz += az * dt;
+    mv.px += mv.vx * dt; mv.py += mv.vy * dt; mv.pz += mv.vz * dt;
+    movMM = Math.hypot(mv.px, mv.py, mv.pz) * 1000; dibuja();
+  }
+  addEventListener('devicemotion', onMotion);
+  const mb = $('m-mov');
+  mb.style.touchAction = 'none'; mb.addEventListener('contextmenu', e => e.preventDefault());
+  mb.addEventListener('pointerdown', async e => {
+    mb.setPointerCapture(e.pointerId);
+    try { if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function' && !mb.dataset.ok) { const r = await DeviceMotionEvent.requestPermission(); if (r !== 'granted') return alert('Debes permitir el acceso a los sensores de movimiento.'); mb.dataset.ok = 1; return alert('Listo. Ahora mantén presionado el botón, espera la vibración y avanza.'); } } catch (x) {}
+    mvReset(); movMM = 0; ini = fin = null; movOn = true; mb.textContent = 'Quieto un instante…'; dibuja();
+  });
+  const sueltaMov = () => { movOn = false; mb.textContent = '📱 Mantén y avanza'; };
+  ['pointerup', 'pointercancel'].forEach(t => mb.addEventListener(t, sueltaMov));
+
   function abreMetro() {
-    ov.style.display = 'flex'; ini = fin = null;
+    ov.style.display = 'flex'; ini = fin = null; movMM = null;
     try { (document.documentElement.requestFullscreen || (() => Promise.reject())).call(document.documentElement).catch(() => {}); } catch (e) {}
     try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) {}
     setTimeout(layout, 60);
@@ -278,5 +307,116 @@
     <h3>🧮 CALCULADORA</h3><ul><li>En el menú ☰. Suma, resta, multiplica, divide, paréntesis y %. Tiene memoria (MC, MR, M+, M−), historial y funciona con el teclado. Ejemplo: 200 + 10% = 220.</li></ul>
     <h3>⚖️ CONVERSIÓN KG A METROS</h3><ul><li>Elige el <b>arvidal</b>, escribe los kilos y abajo ves cuántos <b>metros</b> sacar de la máquina (kilos × número de conversión, con todos sus decimales).</li></ul>
     <h3>🔐 ADMIN (ARVIDALES)</h3><ul><li>Entra con la clave única. Aquí registras, editas ✏️ o eliminas 🗑️ los arvidales y su número de conversión.</li></ul>
-    <h3>📏 METRO</h3><ul><li>Abre una regla horizontal. Deja el dedo presionado y arrastra para medir (en cm, mm, m y pulgadas). <b>Calibra una vez</b> con una tarjeta de banco para que sea exacta.</li></ul>`);
+    <h3>📏 METRO</h3><ul><li>Abre una regla horizontal. Deja el dedo presionado y arrastra para medir (en cm, mm, m y pulgadas). También puedes mantener presionado el botón verde <b>📱</b>, esperar la vibración y <b>mover el teléfono</b> a lo largo de lo que quieres medir. <b>Calibra una vez</b> con una tarjeta de banco para que sea exacta.</li></ul>`);
+
+  // ---------- 📻 WALKIE-TALKIE (mantén para hablar) ----------
+  (function () {
+    const WK_MAX = 25000, miId = localStorage.getItem('alp_cid') || (() => { const x = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('alp_cid', x); return x; })();
+    const s2 = document.createElement('style');
+    s2.textContent = `.ptt{width:100%;height:150px;border-radius:26px;border:2px solid var(--accent);background:rgba(0,242,255,.12);color:var(--accent);font-size:1.2rem;font-weight:800;margin:10px 0;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+    .ptt.on{background:var(--danger);color:#fff;border-color:var(--danger)}
+    #wk-ov{display:none;position:fixed;inset:0;background:#000;z-index:3000;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:20px;color:#1b3a3d;text-align:center}
+    #wk-ov .ptt{height:46vh;background:#04100f;border-color:#0d3b3a;color:#1d6f6a}#wk-ov .ptt.on{background:#5b0f0b;color:#fff}`;
+    document.head.appendChild(s2);
+    const b = document.createElement('button'); b.className = 'dr-item'; b.textContent = '📻 Walkie-Talkie'; b.onclick = () => irA('walkie'); document.querySelector('.dr-box').appendChild(b);
+    const tb = document.createElement('button'); tb.id = 't-walkie'; tb.className = 'tab-btn'; tb.style.display = 'none'; document.querySelector('.tabs').appendChild(tb);
+    const v = document.createElement('div'); v.id = 'v-walkie'; v.className = 'view'; document.querySelector('.app-card').insertBefore(v, document.querySelector('.footer-tag'));
+    v.innerHTML = `<div class="lbl">📻 Walkie-Talkie</div>
+      <input type="text" id="wk-name" placeholder="Tu nombre">
+      <button class="btn btn-send" id="wk-con">🔌 Conectar</button>
+      <div id="wk-live" class="hidden">
+        <div class="obs" id="wk-st">Conectado</div>
+        <button class="ptt" id="wk-ptt">🎙️ MANTÉN PARA HABLAR</button>
+        <label class="chk"><input type="checkbox" id="wk-auto" checked> Reproducir automáticamente lo que hablan</label>
+        <button class="btn btn-ok" id="wk-esp">🌙 Modo espera (pantalla negra)</button>
+        <button class="btn btn-gray" id="wk-off" style="margin-top:8px">Desconectar</button>
+        <div class="lbl" style="margin-top:12px">Últimos mensajes</div><div id="wk-list"></div>
+      </div>`;
+    const ov2 = document.createElement('div'); ov2.id = 'wk-ov';
+    ov2.innerHTML = `<div id="wk-ovt" style="font-size:.9rem">📻 Modo espera · conectado<br><span id="wk-ovs"></span><br><small>Toca dos veces aquí para salir</small></div><button class="ptt" id="wk-ptt2">🎙️ MANTÉN PARA HABLAR</button>`;
+    document.body.appendChild(ov2);
+    $('wk-name').value = localStorage.getItem('alp_wk_name') || (typeof quien !== 'undefined' && quien ? quien.n : '');
+
+    let stream = null, rec = null, chunks = [], t0 = 0, tmo = null, conectado = false, hablando = false, unsub = null, cola = [], sonando = false, wl = null, espera = false, inicio = true, lista = [];
+    const player = new Audio();
+    function silencio() { const n = 8000, d = new DataView(new ArrayBuffer(44 + n)); const w = (o, s) => [...s].forEach((c, i) => d.setUint8(o + i, c.charCodeAt(0))); w(0, 'RIFF'); d.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); d.setUint32(16, 16, true); d.setUint16(20, 1, true); d.setUint16(22, 1, true); d.setUint32(24, 8000, true); d.setUint32(28, 8000, true); d.setUint16(32, 1, true); d.setUint16(34, 8, true); w(36, 'data'); d.setUint32(40, n, true); for (let i = 0; i < n; i++) d.setUint8(44 + i, 128); return URL.createObjectURL(new Blob([d], { type: 'audio/wav' })); }
+    const keep = new Audio(silencio()); keep.loop = true;
+    const estado = t => { $('wk-st').textContent = t; $('wk-ovs').textContent = t; };
+    const nombre = () => $('wk-name').value.trim() || 'Anónimo';
+
+    async function conectar() {
+      if (!$('wk-name').value.trim()) return alert('Escribe tu nombre');
+      if (!window.MediaRecorder) return alert('Tu navegador no soporta grabar audio. Usa Chrome o Safari actualizado.');
+      localStorage.setItem('alp_wk_name', nombre());
+      try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); } catch (e) { return alert('Debes permitir el micrófono.'); }
+      try { player.src = keep.src; await player.play(); } catch (e) {}
+      keep.play().catch(() => {});
+      if (typeof videoOn === 'function') videoOn();
+      try { navigator.mediaSession.metadata = new MediaMetadata({ title: 'ALP Walkie-Talkie', artist: 'Conectado' }); navigator.mediaSession.playbackState = 'playing'; ['pause', 'play'].forEach(a => navigator.mediaSession.setActionHandler(a, () => keep.play().catch(() => {}))); } catch (e) {}
+      conectado = true; inicio = true; $('wk-con').classList.add('hidden'); $('wk-live').classList.remove('hidden'); estado('✅ Conectado. Esperando mensajes…');
+      unsub = db.collection('walkie').orderBy('ts', 'desc').limit(10).onSnapshot(snap => {
+        lista = snap.docs.map(d => ({ id: d.id, ...d.data() })); pintaLista();
+        snap.docs.forEach(d => { const t = d.data().ts; if (t && t.toMillis && t.toMillis() < Date.now() - 120000) d.ref.delete().catch(() => {}); });
+        if (inicio) { inicio = false; return; }
+        snap.docChanges().forEach(c => { if (c.type !== 'added') return; const m = c.doc.data(); if (m.cid === miId || !m.audio) return; if ($('wk-auto').checked) { cola.push(m); procesa(); } });
+      }, () => estado('⚠️ Sin conexión con la base de datos'));
+    }
+    function desconectar() {
+      conectado = false; if (unsub) unsub(); pttStop(); cola = []; player.pause(); keep.pause();
+      if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; salirEspera();
+      if (typeof videoOff === 'function') videoOff();
+      $('wk-con').classList.remove('hidden'); $('wk-live').classList.add('hidden');
+    }
+    function procesa() {
+      if (sonando || hablando || !cola.length) return;
+      const m = cola.shift(); sonando = true; estado('🔊 Habla: ' + m.de);
+      try { navigator.vibrate(60); } catch (e) {}
+      const fin = () => { sonando = false; estado('✅ Conectado. Esperando mensajes…'); procesa(); };
+      player.onended = fin; player.onerror = fin; player.src = m.audio; player.play().catch(fin);
+    }
+    function pttStart() {
+      if (!conectado || hablando) return;
+      player.pause(); sonando = false; hablando = true;
+      const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find(t => MediaRecorder.isTypeSupported(t)) || '';
+      rec = new MediaRecorder(stream, mime ? { mimeType: mime, audioBitsPerSecond: 20000 } : { audioBitsPerSecond: 20000 });
+      chunks = []; rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+      const dur0 = Date.now(); t0 = dur0;
+      rec.onstop = () => {
+        const ms = Date.now() - dur0; if (ms < 400 || !chunks.length) { estado('Muy corto, mantén presionado para hablar'); return procesa(); }
+        const rd = new FileReader();
+        rd.onload = async () => {
+          if (rd.result.length > 900000) { estado('⚠️ Mensaje muy largo'); return; }
+          try { const r = await db.collection('walkie').add({ de: nombre(), cid: miId, audio: rd.result, ms, ts: firebase.firestore.FieldValue.serverTimestamp() }); estado('📤 Enviado ✓'); setTimeout(() => r.delete().catch(() => {}), 90000); }
+          catch (e) { estado('⚠️ No se pudo enviar'); }
+          procesa();
+        };
+        rd.readAsDataURL(new Blob(chunks, { type: rec.mimeType || 'audio/webm' }));
+      };
+      rec.start(); tmo = setTimeout(pttStop, WK_MAX); estado('🎙️ Hablando…');
+      ['wk-ptt', 'wk-ptt2'].forEach(i => $(i).classList.add('on'));
+    }
+    function pttStop() {
+      if (!hablando) return; hablando = false; clearTimeout(tmo);
+      ['wk-ptt', 'wk-ptt2'].forEach(i => $(i).classList.remove('on'));
+      try { if (rec && rec.state !== 'inactive') rec.stop(); } catch (e) {}
+    }
+    ['wk-ptt', 'wk-ptt2'].forEach(i => {
+      const el = $(i);
+      el.addEventListener('contextmenu', e => e.preventDefault());
+      el.addEventListener('pointerdown', e => { e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch (x) {} pttStart(); });
+      ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => el.addEventListener(t, pttStop));
+    });
+    function pintaLista() {
+      $('wk-list').innerHTML = lista.filter(m => m.audio).map((m, i) => `<div class="arv-item"><div><b>${ESC(m.cid === miId ? 'Tú' : m.de)}</b><small>${m.ts && m.ts.toDate ? m.ts.toDate().toLocaleTimeString() : 'enviando…'} · ${Math.round((m.ms || 0) / 1000)} s</small></div><button class="btn-del" style="color:#fff;border-color:var(--border)" data-p="${i}">▶</button></div>`).join('') || '<div class="obs">Aún no hay mensajes.</div>';
+    }
+    $('wk-list').addEventListener('click', e => { const p = e.target.closest('[data-p]'); if (p && !hablando) { cola.unshift(lista.filter(m => m.audio)[+p.dataset.p]); sonando = false; procesa(); } });
+    async function pideWL() { try { wl = await navigator.wakeLock.request('screen'); } catch (e) {} }
+    function entrarEspera() { espera = true; ov2.style.display = 'flex'; pideWL(); keep.play().catch(() => {}); }
+    function salirEspera() { espera = false; ov2.style.display = 'none'; try { if (wl) wl.release(); } catch (e) {} wl = null; }
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && conectado) { keep.play().catch(() => {}); if (espera) pideWL(); } });
+    let ult = 0; $('wk-ovt').addEventListener('pointerdown', () => { const n = Date.now(); if (n - ult < 500) salirEspera(); ult = n; });
+    $('wk-con').onclick = conectar; $('wk-off').onclick = desconectar; $('wk-esp').onclick = entrarEspera;
+    const ent2 = document.querySelector('#modal-help .btn-send');
+    if (ent2) ent2.insertAdjacentHTML('beforebegin', `<h3>📻 WALKIE-TALKIE</h3><ul><li>Escribe tu nombre y toca <b>Conectar</b>. <b>Mantén presionado</b> el botón para hablar y suéltalo para enviar: todos los conectados lo escuchan solos.</li><li><b>🌙 Modo espera:</b> deja la pantalla en negro (el teléfono sigue encendido y cargando) y aun así escuchas a tus compañeros y puedes hablar. Para salir, toca dos veces el texto superior.</li></ul>`);
+  })();
 })();
