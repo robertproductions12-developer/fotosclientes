@@ -11,10 +11,13 @@
 <style>
 :root{--bg:#010409;--accent:#00f2ff;--blue:#0a84ff;--glass:rgba(15,23,42,.88);--border:rgba(0,242,255,.28);--danger:#ff453a;--success:#30d158;--gold:#ffd60a;--t2:rgba(235,235,245,.6)}
 *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
-body{background:var(--bg) radial-gradient(circle at center,#0f172a 0%,#010409 100%);color:#fff;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:10px;overflow:hidden}
-.app-card{width:100%;max-width:500px;background:var(--glass);backdrop-filter:blur(30px);border:1px solid var(--border);border-radius:34px;padding:20px;height:96vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+body{background:linear-gradient(-45deg,#010409,#04163a,#000,#0a2a6b,#010409);background-size:400% 400%;animation:fondo 14s ease infinite;color:#fff;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:10px;overflow:hidden}
+@keyframes fondo{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+#fx{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.app-card{position:relative;z-index:1;width:100%;max-width:500px;background:var(--glass);backdrop-filter:blur(30px);border:1px solid var(--border);border-radius:34px;padding:20px;height:96vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6)}
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .header h1{font-size:1.35rem;font-weight:700;letter-spacing:-.03em}.header span{color:var(--accent)}
+.help-btn{border:1px solid var(--border);background:rgba(0,242,255,.1);color:var(--accent);border-radius:20px;padding:6px 11px;font-size:.68rem;font-weight:700;cursor:pointer}
 .tabs{display:flex;gap:2px;margin-bottom:14px;background:rgba(118,118,128,.24);padding:3px;border-radius:12px}
 .tab-btn{flex:1;padding:9px 4px;border:none;background:none;color:var(--t2);border-radius:9px;cursor:pointer;font-weight:600;font-size:.78rem}
 .tab-btn.active{background:var(--blue);color:#fff;box-shadow:0 2px 8px rgba(10,132,255,.4)}
@@ -54,11 +57,14 @@ input:focus,textarea:focus{border-color:var(--accent)}
 .btn-zip{background:var(--success);color:#000}.btn-share{background:var(--blue)}.btn-edit{background:rgba(118,118,128,.4)}.btn-ok{background:var(--gold);color:#000}
 .btn-del{background:none;border:1px solid var(--danger);color:var(--danger);padding:6px 11px;border-radius:10px;font-size:.65rem;cursor:pointer;font-weight:600}
 .btn-del-all{background:var(--danger);margin-bottom:12px;font-size:.75rem}
-#modal-viewer,#modal-edit{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:1000;justify-content:center;align-items:center}
+#modal-viewer,#modal-edit,#modal-help{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:1000;justify-content:center;align-items:center}
 #modal-viewer img{max-width:95%;max-height:80%;border:2px solid var(--accent);border-radius:12px}
-#modal-edit{align-items:flex-start;overflow-y:auto;padding:16px}
+#modal-edit,#modal-help{align-items:flex-start;overflow-y:auto;padding:16px}
 .edit-box{width:100%;max-width:500px;margin:auto;background:#0b1220;border:1px solid var(--border);border-radius:26px;padding:20px}
 .edit-box h2{font-size:1.15rem;margin-bottom:12px}
+.guia h3{color:var(--accent);font-size:.95rem;margin:14px 0 6px}
+.guia p,.guia li{font-size:.8rem;line-height:1.5;color:rgba(255,255,255,.85)}
+.guia ul{padding-left:18px;margin-bottom:4px}.guia li{margin-bottom:3px}.guia b{color:var(--gold)}
 /* ROBOT */
 .robot-wrap{display:flex;flex-direction:column;align-items:center;flex:1}
 .robot{position:relative;margin:14px 0 8px;display:flex;flex-direction:column;align-items:center}
@@ -78,6 +84,8 @@ input:focus,textarea:focus{border-color:var(--accent)}
 .robot.listening .wave s{animation:bar .8s infinite alternate}
 .rstat{font-size:.78rem;color:var(--accent);font-weight:600;margin:6px 0 10px;letter-spacing:.04em;text-transform:uppercase}
 .rout{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:16px;padding:14px;font-size:.85rem;line-height:1.55;min-height:90px;white-space:pre-line;margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;width:100%;margin-bottom:10px}
+.chip{border:1px solid var(--border);background:rgba(0,242,255,.1);color:var(--accent);border-radius:20px;padding:7px 12px;font-size:.72rem;font-weight:600;cursor:pointer}
 @keyframes pulse{50%{opacity:.45}}@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
 @keyframes zap{0%,100%{opacity:0}10%,30%{opacity:1}50%{opacity:.1}}@keyframes bar{to{height:16px}}
 .footer-tag{text-align:center;font-size:.6rem;color:rgba(255,255,255,.25);padding:10px 0 0}
@@ -85,7 +93,45 @@ input:focus,textarea:focus{border-color:var(--accent)}
 </style>
 </head>
 <body>
+<canvas id="fx"></canvas>
 <div id="modal-viewer" onclick="this.style.display='none'"><img id="img-full" src=""></div>
+
+<div id="modal-help"><div class="edit-box guia">
+  <h2>📖 Instructivo de SISTEMA ALP</h2>
+  <p>Esta web sirve para registrar con fotos cada entrega (nota de entrega), consultarla y compartirla. Tiene tres áreas:</p>
+
+  <h3>📷 EMISOR — quien sube la entrega</h3>
+  <ul>
+    <li><b>Cámara y Capturar:</b> toma fotos del material (hasta 10 por nota).</li>
+    <li><b>Borrar última:</b> elimina la última foto tomada si salió mal.</li>
+    <li><b>Cuadritos de abajo:</b> muestran las fotos ya tomadas.</li>
+    <li><b>Nombre del Cliente / Receptor y Número de Nota:</b> obligatorios para identificar la carpeta.</li>
+    <li><b>Descripción (opcional):</b> escribe o dicta con el 🎤 cómo se fue el material.</li>
+    <li><b>Quedó material pendiente:</b> márcalo si falta entregar algo y escribe qué falta.</li>
+    <li><b>🚀 Subir expediente:</b> guarda todo en la nube; aparece al instante en Receptor.</li>
+  </ul>
+
+  <h3>📦 RECEPTOR — quien revisa y gestiona</h3>
+  <ul>
+    <li><b>Buscador:</b> encuentra carpetas por número de nota o por cliente.</li>
+    <li><b>Cada carpeta:</b> muestra nota, cliente, fecha, hora, observación, fotos y si hay material pendiente.</li>
+    <li><b>Tocar una foto:</b> la agranda. <b>DESCARGAR:</b> baja esa foto.</li>
+    <li><b>📤 Compartir:</b> envía la información y las fotos (por WhatsApp u otra app).</li>
+    <li><b>✏️ Editar:</b> cambia datos, quita o agrega fotos y el estado de pendiente.</li>
+    <li><b>✅ Confirmar material completo:</b> se usa cuando el material pendiente ya fue entregado.</li>
+    <li><b>📥 ZIP:</b> descarga la carpeta completa (fotos + detalles).</li>
+    <li><b>ELIMINAR:</b> borra una carpeta. <b>Eliminar toda la base de datos:</b> borra TODO, úsalo con mucho cuidado.</li>
+  </ul>
+
+  <h3>🤖 CEREBRO — el asistente de voz</h3>
+  <ul>
+    <li>Al entrar te saluda y pregunta quién eres. Di tu nombre y responde cómo te sientes.</li>
+    <li><b>Di o escribe un número de nota</b> (de cualquier forma: "1234", "uno dos tres cuatro", "mil doscientos treinta y cuatro") o un nombre de cliente: te lee fecha, hora, observación, pendientes y analiza las fotos.</li>
+    <li><b>Pregunta por IADIEXPORT</b> (productos, transformadores, postes, luminarias, contacto, cotización): el cerebro investiga en la página de la empresa y te da opciones mientras busca.</li>
+    <li><b>Clave de IA (Gemini):</b> pégala al final y toca 💾 para que describa las fotos y converse. Se guarda solo en tu dispositivo.</li>
+  </ul>
+  <button class="btn btn-send" onclick="document.getElementById('modal-help').style.display='none'">Entendido</button>
+</div></div>
 
 <div id="modal-edit"><div class="edit-box">
   <h2>Editar expediente</h2>
@@ -106,7 +152,7 @@ input:focus,textarea:focus{border-color:var(--accent)}
 
 <div class="app-card">
   <div class="header">
-    <h1>Despacho <span>ALP</span></h1>
+    <div style="display:flex;align-items:center;gap:10px"><h1>Despacho <span>ALP</span></h1><button class="help-btn" onclick="abrirGuia()">📖 Instructivo</button></div>
     <div style="font-size:.65rem;text-align:right;color:var(--t2)">2026<br><span id="status" style="color:var(--success)">● Conectado</span></div>
   </div>
   <div class="tabs">
@@ -151,7 +197,8 @@ input:focus,textarea:focus{border-color:var(--accent)}
         </div>
       </div>
       <div class="rstat" id="rstat">Cerebro ALP en espera</div>
-      <div class="rout" id="rout">Toca el micrófono y di un número de entrega o un nombre de cliente.</div>
+      <div class="rout" id="rout">Toca el micrófono y di un número de entrega, un nombre de cliente o pregunta por IADIEXPORT.</div>
+      <div class="chips" id="ropc"></div>
       <button class="btn btn-cap" id="btn-escuchar" onclick="escucharRobot()">🎤 Hablar con el cerebro</button>
       <div class="row" style="margin-top:10px;width:100%"><input type="text" id="rtxt" placeholder="O escribe un número / nombre" onkeydown="if(event.key==='Enter')consultarRobot(this.value)"><button class="mic" onclick="consultarRobot(document.getElementById('rtxt').value)">➤</button></div>
       <div class="lbl" style="margin-top:12px;width:100%">Clave de IA GRATIS de Google Gemini (visión y charla) · se guarda solo en este dispositivo</div>
@@ -173,6 +220,30 @@ const db = firebase.firestore();
 const MAX_FOTOS = 10, MAX_BYTES = 950000;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tam = arr => arr.reduce((a, b) => a + b.length, 0);
+function abrirGuia() { document.getElementById('modal-help').style.display = 'flex'; }
+
+// ---------- FONDO: RAYOS ----------
+const fx = document.getElementById('fx'), cx = fx.getContext('2d');
+function ajustaFx() { fx.width = innerWidth; fx.height = innerHeight; }
+ajustaFx(); addEventListener('resize', ajustaFx);
+let rayos = [];
+function nuevoRayo() {
+  let x = Math.random() * fx.width, y = 0; const pts = [[x, 0]], fin = fx.height * (.3 + Math.random() * .6);
+  while (y < fin) { y += 15 + Math.random() * 35; x += (Math.random() - .5) * 70; pts.push([x, y]); }
+  rayos.push({ pts, vida: 1 });
+  setTimeout(nuevoRayo, 1000 + Math.random() * 2500);
+}
+function dibujaFx() {
+  cx.clearRect(0, 0, fx.width, fx.height);
+  rayos = rayos.filter(r => r.vida > 0);
+  rayos.forEach(r => {
+    cx.globalAlpha = Math.max(r.vida, 0); cx.strokeStyle = '#9ceeff'; cx.shadowColor = '#00f2ff'; cx.shadowBlur = 18; cx.lineWidth = 1.8;
+    cx.beginPath(); r.pts.forEach((p, i) => i ? cx.lineTo(p[0], p[1]) : cx.moveTo(p[0], p[1])); cx.stroke();
+    r.vida -= .035;
+  });
+  requestAnimationFrame(dibujaFx);
+}
+nuevoRayo(); dibujaFx();
 
 // ---------- EMISOR ----------
 const video = document.getElementById('video'), canvas = document.getElementById('canvas');
@@ -395,7 +466,7 @@ async function guardarEdicion() {
 
 // ---------- ROBOT CEREBRO ----------
 const MODELO = 'claude-sonnet-5-5';
-const robotEl = document.getElementById('robot'), rout = document.getElementById('rout'), rstat = document.getElementById('rstat');
+const robotEl = document.getElementById('robot'), rout = document.getElementById('rout'), rstat = document.getElementById('rstat'), ropc = document.getElementById('ropc');
 const VERSICULOS = [
   "Todo lo puedo en Cristo que me fortalece. Filipenses 4:13",
   "Jehová es mi pastor; nada me faltará. Salmo 23:1",
@@ -428,11 +499,11 @@ function identificar(t) {
 }
 let etapa = 'inicio', quien = null, historial = [];
 const robotActivo = () => document.getElementById('v-robot').classList.contains('active');
-const auto = () => setTimeout(() => { if (robotActivo()) { try { escucharRobot(); } catch (e) {} } }, 400);
+const auto = () => setTimeout(() => { if (robotActivo()) { try { escucharRobot(); } catch (e) {} } }, 250);
 
 function hablar(texto, cb) {
   speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(texto); u.lang = 'es-ES'; u.rate = 1;
+  const u = new SpeechSynthesisUtterance(texto); u.lang = 'es-ES'; u.rate = 1.08;
   robotEl.classList.add('speaking'); rstat.innerText = "Hablando…";
   u.onend = u.onerror = () => { robotEl.classList.remove('speaking'); rstat.innerText = "Cerebro ALP en espera"; if (cb) cb(); };
   speechSynthesis.speak(u);
@@ -446,14 +517,14 @@ function guardarClave() {
 if (localStorage.getItem('alp_key')) document.getElementById('rkey').placeholder = '✓ Clave guardada en este dispositivo';
 
 const MODELOS_GEMINI = ['gemini-3.8-flash', 'gemini-3.5-flash-lite']; // si Google cambia los nombres, edita aquí
-async function ia(system, messages) {
+async function ia(system, messages, mt = 200) {
   const k = localStorage.getItem('alp_key'); if (!k) return null;
   try {
     if (k.startsWith('sk-ant')) {
       const r = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-api-key': k, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-        body: JSON.stringify({ model: MODELO, max_tokens: 500, system, messages })
+        body: JSON.stringify({ model: MODELO, max_tokens: mt, system, messages })
       });
       const j = await r.json();
       return (j.content && j.content[0] && j.content[0].text) || null;
@@ -467,7 +538,7 @@ async function ia(system, messages) {
     for (const mod of MODELOS_GEMINI) {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mod}:generateContent?key=${encodeURIComponent(k)}`, {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents })
+        body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, generationConfig: { maxOutputTokens: mt } })
       });
       if (!r.ok) continue;
       const j = await r.json();
@@ -479,51 +550,155 @@ async function ia(system, messages) {
 }
 async function charla(texto) {
   historial.push({ role: 'user', content: texto }); historial = historial.slice(-8);
-  const r = await ia(`Eres el cerebro ALP, un robot amigable de una empresa de despacho. Hablas con ${quien ? quien.n : 'un compañero'}. Conversa cálido y breve (máximo 2 frases), en español, sin markdown.`, historial);
+  const r = await ia(`Eres el cerebro ALP, un robot amigable de una empresa de despacho. Hablas con ${quien ? quien.n : 'un compañero'}. Conversa cálido y breve (máximo 2 frases), en español, sin markdown.`, historial, 120);
   if (r) historial.push({ role: 'assistant', content: r });
   return r;
 }
 async function analizarFotos(d) {
   const imgs = d.imagenes || [], firma = tam(imgs);
   if (d.analisisIA && d.analisisFirma === firma) return d.analisisIA;
-  const content = imgs.slice(0, 4).map(img => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: img.split(',')[1] } }));
+  const content = imgs.slice(0, 3).map(img => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: img.split(',')[1] } }));
   content.push({ type: 'text', text: `Nota ${d.nota}, cliente ${d.responsable}.${d.descripcion ? ' Observación del emisor: ' + d.descripcion : ''}` });
-  const r = await ia("Eres el cerebro ALP, asistente de un almacén de despacho. Responde en español, sin markdown ni listas, máximo 90 palabras: primero describe lo que observas en las fotos (tipo de material, cantidad aproximada, empaque, estado) y luego da un consejo práctico para despachar o almacenar. Si algo no se ve claro, dilo sin inventar.", [{ role: 'user', content }]);
+  const r = await ia("Eres el cerebro ALP, asistente de un almacén de despacho. Responde en español, sin markdown ni listas, máximo 70 palabras: primero describe lo que observas en las fotos (tipo de material, cantidad aproximada, empaque, estado) y luego da un consejo práctico para despachar o almacenar. Si algo no se ve claro, dilo sin inventar.", [{ role: 'user', content }], 250);
   if (r) db.collection("entregas").doc(d.id).update({ analisisIA: r, analisisFirma: firma }).catch(() => {});
   return r;
 }
 
+// ---------- NÚMEROS DICHOS DE CUALQUIER FORMA ----------
+const NUM = {cero:0,un:1,uno:1,una:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,trece:13,catorce:14,quince:15,dieciseis:16,diecisiete:17,dieciocho:18,diecinueve:19,veinte:20,veintiun:21,veintiuno:21,veintidos:22,veintitres:23,veinticuatro:24,veinticinco:25,veintiseis:26,veintisiete:27,veintiocho:28,veintinueve:29,treinta:30,cuarenta:40,cincuenta:50,sesenta:60,setenta:70,ochenta:80,noventa:90,cien:100,ciento:100,doscientos:200,trescientos:300,cuatrocientos:400,quinientos:500,seiscientos:600,setecientos:700,ochocientos:800,novecientos:900};
+const clase = v => v >= 100 ? 3 : (v >= 30 || v === 20) && v % 10 === 0 ? 2 : 1;
+function extraerNumeros(q) {
+  q = norm(q).replace(/ientas\b/g, 'ientos');
+  const out = new Set();
+  (q.match(/\d+/g) || []).forEach(n => out.add(n));
+  (q.replace(/(\d)[\s.,\-]+(?=\d)/g, '$1').match(/\d+/g) || []).forEach(n => out.add(n));
+  const toks = q.replace(/\d+/g, ' # ').split(/[\s,.;:\-]+/).filter(Boolean);
+  let run = [];
+  const cerrar = () => {
+    const pal = run.filter(t => t !== 'y');
+    if (pal.length) {
+      const sinMil = !run.includes('mil') && !run.includes('y');
+      const vals = pal.filter(t => t !== 'mil').map(t => NUM[t]);
+      if (sinMil) out.add(vals.map(String).join(''));              // uno dos tres → 123
+      let ok = true, prev = null, total = 0, cur = 0;
+      for (const t of pal) {
+        if (t === 'mil') { total += (cur || 1) * 1000; cur = 0; prev = null; continue; }
+        const v = NUM[t], c = clase(v);
+        if (prev !== null && !(prev > c)) ok = false;
+        prev = c; cur += v;
+      }
+      if (ok && (run.includes('mil') || run.includes('y') || pal.length > 1 || NUM[pal[0]] >= 10)) out.add(String(total + cur));
+    }
+    run = [];
+  };
+  for (const t of toks) {
+    if (t in NUM || t === 'mil' || (t === 'y' && run.length)) run.push(t); else cerrar();
+  }
+  cerrar();
+  return [...out].filter(n => n !== '' && n !== 'NaN');
+}
+const sinCeros = s => String(s).trim().replace(/^0+(?=\d)/, '');
+
+function buscar(q) {
+  const nums = extraerNumeros(q).map(sinCeros);
+  let res = datosGlobales.filter(d => {
+    const n = sinCeros(d.nota), soloDig = sinCeros(String(d.nota).replace(/\D/g, ''));
+    return nums.includes(n) || (soloDig && nums.includes(soloDig));
+  });
+  if (!res.length) {
+    const qn = norm(q);
+    const words = qn.split(/\s+/).filter(w => w.length > 2 && !['nota', 'cliente', 'entrega', 'numero', 'del', 'de', 'la', 'el', 'las', 'los', 'una', 'uno', 'dos', 'tres'].includes(w) && !(w in NUM));
+    res = datosGlobales.filter(d => { const n = norm(String(d.responsable)); return qn.includes(n) || words.some(w => n.includes(w)); });
+  }
+  return res;
+}
+
+// ---------- IADIEXPORT ----------
+const IADI_URL = 'https://www.iadiexport.com';
+const IADI_BASE = 'IADIEXPORT (Corporación Iadiexport C.A) diseña, fabrica, distribuye y comercializa equipos y materiales para sistemas eléctricos de alta, media y baja tensión. Aliado en proyectos con atención personalizada. Valores: respeto, compromiso, responsabilidad, confianza y calor humano. Categorías: Transformadores (tecnología desarrollada en casa, estándares nacionales e internacionales), Postes (fabricados bajo normas COVENIN), Luminarias (fabricantes y distribuidores exclusivos de la marca WEMCA, para calles, avenidas, industrias y espacios recreativos), Protecciones eléctricas (cortacorrientes, seccionadores y pararrayos), Herrajes galvanizados (abrazaderas, tornillos, pernos, crucetas, conectores) y Otros productos (cables, brazos para iluminación, grupos electrógenos o plantas eléctricas). Oficina comercial: Av. Francisco de Miranda, Centro Lido, Chacao, Caracas, Venezuela. Teléfonos +58 212 953.6230 / 953.1848. Instagram @iadiexport. Los precios se solicitan en la sección Solicitar cotización de la web.';
+const TEMAS = [
+  { r: /transformador/, p: '/product-category/transformadores/', t: 'Transformadores: eléctricos, con tecnología desarrollada en casa, según estándares nacionales e internacionales y los requerimientos del cliente.' },
+  { r: /poste/, p: '/product-category/postes/', t: 'Postes y estructuras: fabricados bajo las normas COVENIN, con calidad y durabilidad.' },
+  { r: /luminaria|wemca|alumbrado|iluminacion/, p: '/product-category/luminarias/', t: 'Luminarias: somos fabricantes y distribuidores exclusivos de la marca WEMCA, para calles, avenidas, industrias y espacios comunes y recreativos.' },
+  { r: /proteccion|cortacorriente|seccionador|pararrayo/, p: '/product-category/protecciones-electricas/', t: 'Protecciones eléctricas: cortacorrientes, seccionadores y pararrayos de alta calidad para sistemas de distribución.' },
+  { r: /herraje|abrazadera|perno|tornillo|cruceta|conector/, p: '/product-category/herrajes/', t: 'Herrajes galvanizados de larga duración: abrazaderas, tornillos, pernos, crucetas, conectores y más.' },
+  { r: /cable|electrogeno|planta|brazo|otros|producto/, p: '/productos/', t: 'Otros productos: cables, brazos para iluminación, grupos electrógenos (plantas eléctricas) y más.' },
+  { r: /contact|telefono|direccion|donde|ubic|correo|llamar/, p: '/contactenos/', t: 'Oficina comercial: Av. Francisco de Miranda, Centro Lido, Chacao, Caracas. Teléfonos +58 212 953.6230 y 953.1848. Instagram: iadiexport.' },
+  { r: /cotiz|precio|costo|valor|cuanto/, p: '/solicitar-cotizacion/', t: 'Los precios se manejan por cotización: se solicitan en la sección Solicitar cotización de la página o llamando a la oficina comercial.' },
+  { r: /quienes|somos|historia|valores|mision/, p: '/somos/', t: 'IADIEXPORT diseña, fabrica y distribuye equipos y materiales para el sector eléctrico. Sus valores: respeto, compromiso, responsabilidad, confianza y calor humano.' }
+];
+const OPC_IADI = ['Transformadores', 'Postes', 'Luminarias', 'Protecciones', 'Herrajes', 'Otros productos', 'Contacto', 'Cotización'];
+const reIadi = /iadi|iadiexport|nuestra empresa|la empresa|transformador|poste|luminaria|wemca|proteccion|cortacorriente|seccionador|pararrayo|herraje|electrogeno|cotizacion/;
+const cachePag = {};
+function opciones(lista) {
+  ropc.innerHTML = (lista || []).map(o => `<button class="chip" onclick="consultarRobot('IADIEXPORT ${o}')">${o}</button>`).join('');
+}
+async function bajarPagina(path) {
+  if (cachePag[path] !== undefined) return cachePag[path];
+  const url = IADI_URL + path;
+  const proxies = [u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u), u => 'https://corsproxy.io/?' + encodeURIComponent(u)];
+  for (const p of proxies) {
+    try {
+      const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 5000);
+      const r = await fetch(p(url), { signal: ctl.signal }); clearTimeout(to);
+      if (!r.ok) continue;
+      const doc = new DOMParser().parseFromString(await r.text(), 'text/html');
+      doc.querySelectorAll('script,style,nav,noscript,svg').forEach(e => e.remove());
+      const txt = (doc.body.textContent || '').split('\n').map(s => s.trim()).filter(s => s.length > 3).join(' | ').slice(0, 5000);
+      if (txt.length > 50) return (cachePag[path] = txt);
+    } catch (e) {}
+  }
+  return (cachePag[path] = '');
+}
+async function consultarIadi(q) {
+  const n = norm(q), tema = TEMAS.find(t => t.r.test(n));
+  opciones(OPC_IADI);
+  const aviso = 'Voy a la página de IADIEXPORT a investigar. Mientras tanto, elige una opción: transformadores, postes, luminarias, protecciones, herrajes, otros productos, contacto o cotización.';
+  rout.innerText = '🔎 ' + aviso; rstat.innerText = "Investigando…";
+  if (!tema || !localStorage.getItem('alp_key')) hablar(tema ? 'Investigando en la página de IADIEXPORT.' : aviso);
+  const paginas = await Promise.all([bajarPagina(tema ? tema.p : '/productos/'), bajarPagina('/')]);
+  const web = paginas.filter(Boolean).join(' ');
+  let resp = null;
+  if (localStorage.getItem('alp_key')) {
+    resp = await ia('Eres el cerebro ALP y respondes sobre la empresa IADIEXPORT usando solo la información dada. Responde en español, sin markdown, máximo 3 frases claras. Si no hay precios en la información, di que se piden por cotización.', [{ role: 'user', content: `Pregunta: ${q}\n\nInformación base: ${IADI_BASE}\n\nContenido de la web: ${web}` }], 220);
+  }
+  if (!resp) {
+    resp = tema ? tema.t : IADI_BASE.split('. ').slice(0, 3).join('. ') + '.';
+    const precios = (web.match(/[^|]*(\$|usd|bs\.?)\s?\d[^|]*/gi) || []).slice(0, 3).map(s => s.trim()).join('. ');
+    if (precios) resp += ' Valores encontrados en la web: ' + precios + '.';
+  }
+  rout.innerText = '🏢 IADIEXPORT\n\n' + resp + '\n\n🌐 ' + IADI_URL + (tema ? tema.p : '');
+  hablar(resp, auto);
+}
+
+// ---------- FLUJO DEL CEREBRO ----------
 function iniciarCerebro() {
-  etapa = 'quien'; quien = null; historial = [];
+  etapa = 'quien'; quien = null; historial = []; opciones([]);
   const m = "Hola, soy el cerebro ALP. ¿Quién eres?";
   rout.innerText = m; hablar(m, auto);
 }
 function escucharRobot() {
   if (!SR) return alert("Tu navegador no soporta reconocimiento de voz. Prueba con Chrome o Safari, o escribe abajo.");
   speechSynthesis.cancel();
-  const r = new SR(); r.lang = 'es-ES'; r.interimResults = false;
+  const r = new SR(); r.lang = 'es-ES'; r.interimResults = false; r.maxAlternatives = 3;
   robotEl.classList.add('listening'); rstat.innerText = "Escuchando…";
-  r.onresult = e => manejar(e.results[0][0].transcript);
+  r.onresult = e => {
+    const alts = [...e.results[0]].map(a => a.transcript);
+    const mejor = alts.find(a => extraerNumeros(a).length && buscar(a).length) || alts[0];
+    manejar(mejor);
+  };
   r.onend = () => { robotEl.classList.remove('listening'); if (rstat.innerText === "Escuchando…") rstat.innerText = "Cerebro ALP en espera"; };
   r.onerror = () => robotEl.classList.remove('listening');
   r.start();
 }
 function consultarRobot(q) { manejar(q); document.getElementById('rtxt').value = ''; }
 
-function buscar(q) {
-  q = norm(q);
-  const nums = q.match(/\d+/g) || [];
-  let res = datosGlobales.filter(d => nums.includes(String(d.nota).trim()));
-  if (!res.length) {
-    const words = q.split(/\s+/).filter(w => w.length > 2 && !['nota', 'cliente', 'entrega', 'numero', 'del', 'de', 'la', 'el'].includes(w));
-    res = datosGlobales.filter(d => { const n = norm(String(d.responsable)); return q.includes(n) || words.some(w => n.includes(w)); });
-  }
-  return res;
-}
-
 async function manejar(q) {
   q = (q || '').trim(); if (!q) return;
+  speechSynthesis.cancel();
   rout.innerText = '🗣️ ' + q;
+  // Si dice un número de nota existente, se pone a trabajar de inmediato
+  if (etapa !== 'listo' && extraerNumeros(q).length && buscar(q).length) etapa = 'listo';
   if (etapa === 'inicio' || etapa === 'quien') {
     const p = identificar(q);
     if (!p) { const m = "No te reconocí. Dime tu nombre: Hernán, Mary, Elly, Robert o Pedro."; rout.innerText = m; return hablar(m, auto); }
@@ -533,18 +708,24 @@ async function manejar(q) {
   }
   if (etapa === 'sentir') {
     etapa = 'listo';
-    const r = (await charla(q)) || "Me alegra escucharte, aquí estoy para ayudarte.";
-    const m = r + " Dime un número de nota o un nombre de cliente.";
-    rout.innerText = m; return hablar(m, auto);
+    const m0 = "Me alegra escucharte. Dime un número de nota, un nombre de cliente o pregunta por IADIEXPORT.";
+    opciones(['IADIEXPORT']);
+    rout.innerText = m0; hablar(m0, auto);
+    charla(q); // sigue el historial sin hacer esperar
+    return;
   }
   const res = buscar(q);
-  if (!res.length) {
-    const hayNum = /\d/.test(q);
-    const r = !hayNum ? await charla(q) : null;
-    const m = r || `No encontré ninguna entrega con "${q}".`;
+  if (res.length) { opciones([]); return reportar(res); }
+  if (reIadi.test(norm(q))) return consultarIadi(q);
+  const nums = extraerNumeros(q);
+  if (nums.length) {
+    const m = `No encontré la nota ${nums.slice(0, 3).join(' ni ')}. Repítela o escríbela abajo.`;
     rout.innerText = m; return hablar(m, auto);
   }
-  reportar(res);
+  rout.innerText = '💬 …';
+  const r = await charla(q);
+  const m = r || `No encontré ninguna entrega con "${q}".`;
+  rout.innerText = m; hablar(m, auto);
 }
 async function reportar(res) {
   const d = res[0], extra = res.length > 1 ? `\n\n(${res.length} resultados, mostrando el más reciente)` : '';
@@ -552,15 +733,15 @@ async function reportar(res) {
   voz += d.descripcion ? ` Observación: ${d.descripcion}.` : ` Sin observaciones.`;
   if (d.pendiente) voz += ` Atención, hay material pendiente${d.pendienteDetalle ? ': ' + d.pendienteDetalle : ''}.`;
   if (res.length > 1) voz += ` Encontré ${res.length} resultados, te leí el más reciente.`;
-  const base = textoInfo(d) + extra;
-  let analisis = null;
-  if (localStorage.getItem('alp_key')) {
-    rout.innerText = base + '\n\n🔎 Analizando las fotos…'; rstat.innerText = "Analizando…";
-    analisis = await analizarFotos(d);
-  }
-  const v = verso();
-  rout.innerText = base + (analisis ? '\n\n🤖 ' + analisis : (localStorage.getItem('alp_key') ? '\n\n(No pude analizar las fotos ahora.)' : '\n\n(Guarda la clave de IA abajo para que describa las fotos y dé consejos.)')) + '\n\n📖 ' + v;
-  hablar(voz + (analisis ? ' ' + analisis : '') + ' Versículo: ' + v, auto);
+  const base = textoInfo(d) + extra, tieneClave = !!localStorage.getItem('alp_key');
+  rout.innerText = base + (tieneClave ? '\n\n🔎 Analizando las fotos…' : '');
+  const pa = tieneClave ? analizarFotos(d) : Promise.resolve(null); // el análisis corre mientras habla
+  hablar(voz, async () => {
+    const a = await pa;
+    if (a) { rout.innerText = base + '\n\n🤖 ' + a; return hablar(a, auto); }
+    rout.innerText = base + (tieneClave ? '\n\n(No pude analizar las fotos ahora.)' : '\n\n(Guarda la clave de IA abajo para que describa las fotos y dé consejos.)');
+    auto();
+  });
 }
 </script>
 </body>
